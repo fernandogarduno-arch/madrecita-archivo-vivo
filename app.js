@@ -18,13 +18,70 @@ pieces.forEach((p,i)=>{const b=document.createElement('button');b.className='pie
 function updateSeen(){ $('visited').textContent=`${seen.size} / 6`;markers.forEach((m,i)=>m.classList.toggle('seen',seen.has(i)));try{localStorage.setItem('madrecita-pasaportes-v2',JSON.stringify([...seen]));}catch{}}
 function openPiece(i){if(i<0||i>=pieces.length)return;selected=i;const p=pieces[i];seen.add(i);updateSeen();$('detail-id').textContent='PASAPORTE / '+p.id;$('detail-index').textContent='0'+(i+1);$('detail-title').textContent=p.name;$('detail-theme').textContent=p.theme;$('detail-intro').textContent=p.intro;$('detail-note').textContent=p.note;$('detail-photo').src=p.photo;$('full-passport').href='archivo/?pieza='+p.id;$('detail-fields').replaceChildren();for(const [k,v] of [['Productor',p.producer],['NOM consignado',p.nom],['Libro','Sheet3 · fila '+p.row],['Folio fotográfico',p.folio]]){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=v||'Sin dato';$('detail-fields').append(dt,dd);}showDialog('detail');}
 $('detail-next').onclick=()=>{$('detail').close();if(ready){enter();goTo((selected+1)%6);}else openPiece((selected+1)%6);};
-const audio=$('identity-audio');$('sound').onclick=async()=>{if(audio.paused){film.pause();$('screen-toggle').textContent='Ver película ▶';$('screen-toggle').setAttribute('aria-pressed','false');try{await audio.play();$('sound').innerHTML='Sonido <span>●</span>';$('sound').setAttribute('aria-pressed','true');}catch{toast('Pulsa de nuevo para activar el sonido.');}}else{audio.pause();$('sound').innerHTML='Sonido <span>○</span>';$('sound').setAttribute('aria-pressed','false');}};audio.onended=()=>{$('sound').innerHTML='Sonido <span>○</span>';$('sound').setAttribute('aria-pressed','false');};
+const audio = $('identity-audio');
+const welcomeKey = 'madrecita-jingle-bienvenida-v1';
+let welcomePlayed = false;
+let waitingForGesture = false;
+let startingWelcome = false;
+try { welcomePlayed = sessionStorage.getItem(welcomeKey) === '1'; } catch {}
+
+function rememberWelcome() {
+  welcomePlayed = true;
+  waitingForGesture = false;
+  try { sessionStorage.setItem(welcomeKey, '1'); } catch {}
+}
+
+function updateSoundButton() {
+  const playing = !audio.paused && !audio.ended;
+  $('sound').setAttribute('aria-pressed', String(playing));
+  $('sound').title = playing ? 'Pausar el jingle' : 'Escuchar el jingle';
+  $('sound').querySelector('span').textContent = playing ? '●' : '○';
+}
+
+audio.addEventListener('playing', () => { rememberWelcome(); updateSoundButton(); });
+audio.addEventListener('pause', updateSoundButton);
+audio.addEventListener('ended', updateSoundButton);
+
+async function playWelcome() {
+  if (!entered || welcomePlayed || startingWelcome || isModal() || !film.paused) return;
+  startingWelcome = true;
+  waitingForGesture = false;
+  try {
+    await audio.play();
+    rememberWelcome();
+  } catch (error) {
+    waitingForGesture = error.name === 'NotAllowedError';
+  } finally {
+    startingWelcome = false;
+  }
+}
+
+function retryWelcome(event) {
+  if (!waitingForGesture || !event.isTrusted || !entered || isModal()) return;
+  if (event.target.closest?.('#sound, #screen-toggle, #trailer-open, #home, dialog')) return;
+  void playWelcome();
+}
+document.addEventListener('click', retryWelcome);
+document.addEventListener('keydown', retryWelcome);
+document.addEventListener('pointerup', event => {
+  if (event.target.closest?.('#world, .mobile-move')) retryWelcome(event);
+});
+
+$('sound').onclick = async () => {
+  waitingForGesture = false;
+  if (!audio.paused) { audio.pause(); return; }
+  film.pause();
+  $('screen-toggle').textContent = 'Ver película ▶';
+  $('screen-toggle').setAttribute('aria-pressed', 'false');
+  try { await audio.play(); } catch { toast('Pulsa de nuevo para activar el sonido.'); }
+};
 
 
 const trailer = $('trailer-player');
 const trailerDialog = $('trailer-dialog');
 
 function openTrailer(play) {
+  waitingForGesture = false;
   audio.pause();
   film.pause();
   $('sound').innerHTML = 'Sonido <span>○</span>';
@@ -54,7 +111,16 @@ function build(){
  clock=new THREE.Clock();ready=true;$('enter').disabled=false;$('guided').disabled=false;$('enter').textContent='Entrar a la casona  →';updateSeen();animate();
 }
 
-function enter(){if(!ready)return;entered=true;$('hero-background').hidden=true;$('hero-video').pause();$('welcome').hidden=true;$('hud').hidden=false;$('markers').hidden=false;}
+function enter() {
+  if (!ready || entered) return;
+  entered = true;
+  $('hero-background').hidden = true;
+  $('hero-video').pause();
+  $('welcome').hidden = true;
+  $('hud').hidden = false;
+  $('markers').hidden = false;
+  void playWelcome();
+}
 function reset(){if(!ready)return;document.exitPointerLock?.();keys.clear();tween=null;guided=false;selected=-1;nearest=-1;camera.position.set(6,3.1,16.7);yaw=.58;pitch=-.12;$('piece-hint').hidden=true;$('tour-caption').textContent='Explora a tu ritmo.';$('tour').textContent='Recorrido guiado';}
 $('home').onclick=e=>{e.preventDefault();reset();entered=false;$('welcome').hidden=false;$('hud').hidden=true;$('markers').hidden=true;showHero();};$('reset').onclick=reset;$('enter').onclick=()=>{enter();toast(innerWidth<750?'Usa las flechas para caminar y desliza para mirar.':'W A S D para caminar · Arrastra para mirar · Pulsa una pieza para descubrirla');};$('guided').onclick=()=>{enter();goTo(0);};$('curator-tour').onclick=()=>{$('curator-dialog').close();if(ready){enter();goTo(0);}else showDialog('collection-dialog');};$('tour').onclick=()=>{if(guided){guided=false;tween=null;$('tour').textContent='Recorrido guiado';$('tour-caption').textContent='Explora a tu ritmo.';}else goTo(selected<0?0:selected);};
 function routeTo(to,target){
@@ -69,7 +135,7 @@ function routeTo(to,target){
 function goTo(i){if(!ready||i<0||i>=pieces.length)return;enter();document.exitPointerLock?.();keys.clear();selected=i;guided=true;const p=pieces[i];const to=new THREE.Vector3(-8.3,2.55,p.z+1.15);routeTo(to,new THREE.Vector3(p.x,2.6,p.z));$('tour').textContent='Salir de la visita guiada';$('tour-caption').textContent=`Mirada ${i+1} de 6 · ${p.theme.split(' / ')[0].toLowerCase()}`;hint(i);}
 function visitZone(zone){enter();keys.clear();guided=true;selected=-1;hint(-1);const views={walls:{from:[-8.25,2.65,11.25],to:[3.65,2.65,-2.1],text:'El comedor y la pantalla'},bar:{from:[.4,2.55,11.8],to:[-3.6,1.65,15],text:'La barra · piedra verde y luz de cobre, frente a la televisión'},dining:{from:[.5,2.55,12.7],to:[5.3,1.7,6.8],text:'El comedor · la mesa rectangular del lugar'},lounge:{from:[.5,2.55,4],to:[-4.2,1.5,3],text:'El lounge · frente al muro de la colección'},screen:{from:[4,2.55,-12.5],to:[.1,2.3,-15.8],text:'La pantalla · memoria en movimiento'}};const v=views[zone];routeTo(new THREE.Vector3(...v.from),new THREE.Vector3(...v.to));$('tour-caption').textContent=v.text;$('tour').textContent='Salir de la visita guiada';}
 $('bar').onclick=()=>visitZone('bar');$('lounge').onclick=()=>visitZone('lounge');$('dining').onclick=()=>visitZone('dining');
-async function toggleFilm(){if(!ready)return;if(film.paused){audio.pause();$('sound').innerHTML='Sonido <span>○</span>';$('sound').setAttribute('aria-pressed','false');visitZone('screen');try{await film.play();casona.playScreen();$('screen-toggle').textContent='Pausar película';$('screen-toggle').setAttribute('aria-pressed','true');}catch{toast('Pulsa de nuevo para reproducir la película.');}}else{film.pause();$('screen-toggle').textContent='Ver película ▶';$('screen-toggle').setAttribute('aria-pressed','false');}}
+async function toggleFilm(){if(!ready)return;if(film.paused){waitingForGesture=false;audio.pause();$('sound').innerHTML='Sonido <span>○</span>';$('sound').setAttribute('aria-pressed','false');visitZone('screen');try{await film.play();casona.playScreen();$('screen-toggle').textContent='Pausar película';$('screen-toggle').setAttribute('aria-pressed','true');}catch{toast('Pulsa de nuevo para reproducir la película.');}}else{film.pause();$('screen-toggle').textContent='Ver película ▶';$('screen-toggle').setAttribute('aria-pressed','false');}}
 $('screen-toggle').onclick=toggleFilm;film.onended=()=>{$('screen-toggle').textContent='Ver película ▶';$('screen-toggle').setAttribute('aria-pressed','false');};
 
 function hint(i){if(i<0){$('piece-hint').hidden=true;return;}$('piece-hint').hidden=false;$('hint-number').textContent=`0${i+1} / 06 · ${seen.has(i)?'DESCUBIERTA':'POR DESCUBRIR'}`;$('hint-title').textContent=pieces[i].name;$('inspect').onclick=()=>openPiece(i);$('next').onclick=()=>goTo((i+1)%6);}
