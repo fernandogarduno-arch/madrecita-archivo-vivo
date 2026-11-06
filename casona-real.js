@@ -95,7 +95,7 @@ export function createCasona(scene,renderer,pieces,video){
  // Puerta de fondo y pantalla, sin añadir ventanales ni arcos no documentados.
  box(2.1,3.5,.1,darkwood,6.3,1.75,-17.78);box(1.8,.65,.03,new T.MeshBasicMaterial({color:'#c1d9de'}),6.3,2.98,-17.7);
  box(6,.95,1.2,white,.1,.5,-15.7);box(4.4,2.5,.12,black,.1,2.3,-15.8);
- const poster=new T.TextureLoader().load('assets/portada-viva.png');poster.colorSpace=T.SRGBColorSpace;const screenMat=new T.MeshBasicMaterial({map:poster});const screen=mesh(new T.PlaneGeometry(4.15,2.3),screenMat,.1,2.3,-15.72,scene,false);screen.userData.action='screen';selectables.push(screen);obstacles.push([-3.1,3.3,-16.4,-14.9]);const videoTexture=new T.VideoTexture(video);videoTexture.colorSpace=T.SRGBColorSpace;
+ const poster=new T.TextureLoader().load('assets/poster-pelicula.jpg');poster.colorSpace=T.SRGBColorSpace;const screenMat=new T.MeshBasicMaterial({map:poster});const screen=mesh(new T.PlaneGeometry(4.15,2.3),screenMat,.1,2.3,-15.72,scene,false);screen.userData.action='screen';selectables.push(screen);obstacles.push([-3.1,3.3,-16.4,-14.9]);const videoTexture=new T.VideoTexture(video);videoTexture.colorSpace=T.SRGBColorSpace;
  scene.add(new T.HemisphereLight('#a9b6bc','#52473a',.49));
  const sun=new T.DirectionalLight('#ffdfb8',.48);sun.position.set(8,9,13);sun.target.position.set(-7,1,-4);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-24,right:24,top:24,bottom:-24,near:.1,far:65});sun.shadow.normalBias=.04;scene.add(sun,sun.target);
  for(const z of [-12,-3,7]){const l=new T.PointLight('#ffcc87',47,13,2);l.position.set(-8.8,4,z);scene.add(l);}

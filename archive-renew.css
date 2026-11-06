@@ -2,3 +2,14 @@
 @media(max-width:750px){.brand{padding-left:35px;min-height:32px}.brand .seal{width:28px;height:33px}.topbar{flex-wrap:wrap;gap:8px;padding:10px 16px}.topbar nav{gap:4px;flex-wrap:wrap}.topbar nav a{font-size:10px;padding:7px 9px}.topbar nav button{padding:7px}.room-label{top:98px}.intro{top:26%}}
 
 #vit-panel{position:fixed;left:28px;top:145px;z-index:9;max-width:min(260px,36vw);padding:16px 18px;border:1px solid #ad98715e;border-radius:8px;color:#f5eddb;background:#11251feb;box-shadow:0 10px 30px #0003}#vit-panel h2{font:27px/1.05 Georgia,serif;margin:8px 0}#vit-panel .overline,#vit-id{font:9px monospace;color:#d9c292;letter-spacing:.1em}#vit-source{font:11px system-ui;color:#d7dfcf;margin-top:8px}#vit-note{font:12px/1.4 system-ui;margin:8px 0}.vit-actions{display:flex;flex-wrap:wrap;gap:4px}#vit-panel button,#vit-panel a{font:12px system-ui;color:#fff2d4}#vit-panel button{padding:5px 8px;border:1px solid #b09a72;background:#294337;border-radius:3px}#vit-panel a{display:inline-block;margin:8px 10px 0 0;text-underline-offset:3px}body:has(#vit-panel:not([hidden])) .room-label{display:none}body:has(#welcome:not([hidden])):not(:has(#fallback:not([hidden]))) #vit-panel{display:none}@media(max-width:750px){#vit-panel{top:96px;left:12px;right:12px;max-width:none;padding:8px 12px;line-height:1.2}#vit-panel h2{display:inline;font-size:19px;margin:0 6px 0 0}#vit-source{margin:2px 0;font-size:10px}#vit-note{margin:3px 0;font-size:10px}.vit-actions{display:inline-flex;margin-right:7px}#vit-panel button,#vit-panel a{font-size:11px}#vit-panel a{margin:3px 5px 0 0}}
+
+.trailer-invite{margin:15px 0 0}
+.trailer-invite a{display:inline-flex;align-items:center;gap:10px;padding:7px 13px;border:1px solid #c4ac7eaa;border-radius:4px;color:#f8ead0;background:#10231ed9;text-decoration:none;font:13px system-ui,sans-serif}
+.trailer-invite span{font:10px monospace;color:#e1ca97}
+#trailer-dialog{padding:0;width:min(960px,94vw);max-height:92dvh;overflow:auto;border:1px solid #a28c64;border-radius:9px;background:#12231e;color:#f4ead4}
+#trailer-dialog::backdrop{background:#08120fdf}
+.trailer-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:11px 17px}
+.trailer-heading h2{font:24px/1.14 Georgia,serif;margin:0}
+#trailer-dialog .close{position:static;float:none;margin:0;border:1px solid #a89470;background:transparent;color:#f3ead6}
+#trailer-player{display:block;width:100%;max-height:76dvh;aspect-ratio:16/9;background:#0f1814}
+@media(max-height:700px){.trailer-invite{margin-top:7px}.trailer-invite a{padding:5px 9px}}

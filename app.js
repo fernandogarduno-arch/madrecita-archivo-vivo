@@ -6,7 +6,7 @@ import {pieces} from './seleccion.js';
 pieces.forEach((piece,i)=>{piece.x=-9.8;piece.z=12-i*5;});
 let renderer,scene,camera,clock,ready=false,entered=false,yaw=0,pitch=0,tween=null,selected=-1,guided=false,locked=false,drag=null,frames=0,nearest=-1;
 const keys=new Set(),bottles=[],markers=[],seen=new Set();
-let casona;const film=document.createElement("video");film.src="assets/pelicula.mp4";film.preload="none";film.playsInline=true;film.crossOrigin="anonymous";
+let casona;const film=document.createElement("video");film.src="assets/pelicula.mp4?ed=retana";film.preload="none";film.playsInline=true;film.crossOrigin="anonymous";
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 try{JSON.parse(localStorage.getItem('madrecita-pasaportes-v2')||'[]').filter(i=>Number.isInteger(i)&&i>=0&&i<6).forEach(i=>seen.add(i));}catch{}
 const isModal=()=>!!document.querySelector('dialog[open]');
@@ -19,6 +19,32 @@ function updateSeen(){ $('visited').textContent=`${seen.size} / 6`;markers.forEa
 function openPiece(i){if(i<0||i>=pieces.length)return;selected=i;const p=pieces[i];seen.add(i);updateSeen();$('detail-id').textContent='PASAPORTE / '+p.id;$('detail-index').textContent='0'+(i+1);$('detail-title').textContent=p.name;$('detail-theme').textContent=p.theme;$('detail-intro').textContent=p.intro;$('detail-note').textContent=p.note;$('detail-photo').src=p.photo;$('full-passport').href='archivo/?pieza='+p.id;$('detail-fields').replaceChildren();for(const [k,v] of [['Productor',p.producer],['NOM consignado',p.nom],['Libro','Sheet3 · fila '+p.row],['Folio fotográfico',p.folio]]){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=v||'Sin dato';$('detail-fields').append(dt,dd);}showDialog('detail');}
 $('detail-next').onclick=()=>{$('detail').close();if(ready){enter();goTo((selected+1)%6);}else openPiece((selected+1)%6);};
 const audio=$('identity-audio');$('sound').onclick=async()=>{if(audio.paused){film.pause();$('screen-toggle').textContent='Ver película ▶';$('screen-toggle').setAttribute('aria-pressed','false');try{await audio.play();$('sound').innerHTML='Sonido <span>●</span>';$('sound').setAttribute('aria-pressed','true');}catch{toast('Pulsa de nuevo para activar el sonido.');}}else{audio.pause();$('sound').innerHTML='Sonido <span>○</span>';$('sound').setAttribute('aria-pressed','false');}};audio.onended=()=>{$('sound').innerHTML='Sonido <span>○</span>';$('sound').setAttribute('aria-pressed','false');};
+
+
+const trailer = $('trailer-player');
+const trailerDialog = $('trailer-dialog');
+
+function openTrailer(play) {
+  audio.pause();
+  film.pause();
+  $('sound').innerHTML = 'Sonido <span>○</span>';
+  $('sound').setAttribute('aria-pressed', 'false');
+  $('screen-toggle').textContent = 'Ver película ▶';
+  $('screen-toggle').setAttribute('aria-pressed', 'false');
+  if (!trailerDialog.open) showDialog('trailer-dialog');
+  if (play) trailer.play().catch(() => toast('Pulsa reproducir para escuchar la película.'));
+}
+
+$('trailer-open').addEventListener('click', event => {
+  event.preventDefault();
+  history.replaceState(history.state, '', '#pelicula');
+  openTrailer(true);
+});
+trailerDialog.addEventListener('close', () => {
+  trailer.pause();
+  if (location.hash === '#pelicula') history.replaceState(history.state, '', location.pathname + location.search);
+});
+if (location.hash === '#pelicula') openTrailer(false);
 
 function build(){
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.08,100);camera.position.set(6,3.1,16.7);camera.rotation.order='YXZ';yaw=.58;pitch=-.12;
