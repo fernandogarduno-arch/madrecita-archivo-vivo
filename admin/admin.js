@@ -1,5 +1,5 @@
 import {API_BASE} from './config.js';
-import {housePhoto,houseCaption,resolvePublicPhoto} from '../archivo/foto-publica.js';
+import {housePhoto,houseCaption,newImageLabel,resolvePublicPhoto} from '../archivo/foto-publica.js';
 
 const $ = id => document.getElementById(id);
 const form = $('bottle-form');
@@ -88,13 +88,16 @@ async function loadArchiveImages() {
 }
 function picture(container, url, id) {
   const image = node('img'), label = node('small','Referencia');
-  const archive = (archiveImages?.get(id) || []).map(resolvePublicPhoto);
+  const photos = archiveImages?.get(id) || [];
+  const archive = photos.map(resolvePublicPhoto);
   const urls = [...new Set([url, ...archive].filter(Boolean))];
   image.loading = 'lazy';
   container.replaceChildren(image, label);
   function next() {
     const src = urls.shift();
-    label.hidden = Boolean(src);
+    const fresh = src && photos.some((photo,i) => photo.newImage && archive[i] === src);
+    label.hidden = Boolean(src) && !fresh;
+    label.textContent = fresh ? newImageLabel : 'Referencia';
     image.alt = src ? 'Fotografía de la colección' : houseCaption;
     image.onerror = src ? next : null;
     image.src = src || housePhoto;

@@ -159,6 +159,7 @@ export async function exhibirPieza({THREE, scene, record}) {
     group,
     face,
     photoStatus: photo.status,
+    newImage: Boolean(photo.reference?.newImage),
     dispose() {
       group.removeFromParent();
       boxGeometry.dispose();

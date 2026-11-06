@@ -4,6 +4,15 @@ import {API_BASE} from '../admin/config.js';
 export const housePhoto = new URL('../botella/referencia-cava.webp', import.meta.url).href;
 export const houseCaption = 'Imagen de referencia · Reserva Retana';
 
+export const newImageLabel = '✳ Nueva imagen';
+export function newImageBadge() {
+  const badge = document.createElement('span');
+  badge.className = 'new-image-badge';
+  badge.textContent = newImageLabel;
+  badge.hidden = true;
+  return badge;
+}
+
 // La referencia pertenece a la interfaz, nunca a las fotos documentales de la ficha.
 export function showRecordImage(img, record, describe = () => {}, first = record.photos?.[0]) {
   const candidates = [first, ...(record.photos || []).filter(p => p !== first)].filter(Boolean);
