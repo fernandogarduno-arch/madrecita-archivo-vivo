@@ -1,0 +1,35 @@
+* { box-sizing:border-box }
+.cabinet-intro,.mounting,.list { padding:clamp(1.5rem,5vw,5rem) }
+.cabinet-intro { display:grid;grid-template-columns:1.3fr 1fr;align-items:end;gap:2rem;background:linear-gradient(100deg,#1a2822f7,#1b2c24c4),url('../assets/muro/foto-4.jpeg') center 46%/cover;color:#f6eddb }
+.cabinet-intro h1 { font:400 clamp(3.45rem,6.8vw,7rem)/.94 Georgia,serif;letter-spacing:-.055em;margin:.28em 0 0 }
+.cabinet-intro em { color:#ddbe8d }
+.cabinet-intro p { max-width:35em }
+.mounting { padding-top:2rem }
+.toolbar,.actions { display:flex;justify-content:space-between;align-items:center;gap:1rem }
+.toolbar p { margin:0 0 1rem }
+.territory-page h2 { font-size:clamp(2rem,3.5vw,4rem) }
+button,select { font:inherit;padding:.6rem .85rem;background:#fcf6e7;color:#24382d;border:1px solid #9f8d70;border-radius:3px }
+button { cursor:pointer }
+#mounts,#entries { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(.8rem,2vw,2rem) }
+.mount { display:flex;flex-direction:column;background:#fffaf0;padding:1rem;border:1px solid #cfc3ad }
+.mount h3 { font:italic 1.65rem Georgia,serif;margin:0 0 .65rem }
+.mount figure { position:relative;display:grid;place-items:center;margin:0 0 1rem;height:clamp(220px,25vw,330px);padding:1rem 1rem 1.65rem;background:radial-gradient(ellipse at top,#625839,#193029);border-bottom:6px solid #92663f }
+.nicho figure { border-radius:48% 48% 2px 2px;background:radial-gradient(ellipse at center,#806944,#343329) }
+.vitrina figure { box-shadow:inset 0 0 0 3px #a58b5c,inset 0 0 0 7px #314138 }
+.mesa figure { background:linear-gradient(0deg,#765339 0 13%,#d5c6a6 14%,#eee3c9) }
+.mount img { width:100%;height:100%;min-height:0;object-fit:contain }
+.mount figcaption { position:absolute;bottom:.25rem;left:50%;transform:translateX(-50%);background:#283228;color:#fff4dc;white-space:nowrap;padding:0 .5rem;font-size:.72rem }
+.mount h4 { font:1.5rem Georgia,serif;margin:.3em 0 }
+.mount small,#entries small { color:#52634e;font-size:.73rem }
+.mount p { margin:.4rem 0 1rem }
+.actions { margin-top:auto;font-size:.9rem;flex-wrap:wrap }
+.list { padding-top:1rem;border-top:1px solid #cbbca0 }
+#entries article { border-top:1px solid #bcac90;padding:.9rem 0 }
+#entries a { display:block;font:1.25rem Georgia,serif }
+#entries p { margin:.4rem 0;font-size:.82rem }
+@media(max-width:700px) {
+  .cabinet-intro,#mounts { grid-template-columns:1fr }
+  .cabinet-intro { gap:.5rem }
+  #entries { grid-template-columns:1fr 1fr }
+  .toolbar { align-items:flex-start;flex-wrap:wrap;margin-bottom:1rem }
+}

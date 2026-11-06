@@ -99,6 +99,10 @@ function retryWelcome(event) {
   if (!waitingForGesture || !event.isTrusted || !entered || isModal()) return;
   if (event.target.closest?.('#sound, #screen-toggle, #trailer-open, #home, dialog')) return;
   void playWelcome();
+  if (!cabinetStarted && !new URLSearchParams(location.search).has('exhibir')) {
+    cabinetStarted = true;
+    import('./especiales/montaje-3d.js').then(m => m.mountCabinet(THREE,scene,casona,bottles)).catch(err => console.warn('Gabinete no disponible',err));
+  }
 }
 document.addEventListener('click', retryWelcome);
 document.addEventListener('keydown', retryWelcome);
@@ -160,6 +164,7 @@ function build(){
  $('enter').disabled=false;$('guided').disabled=pieces.length===0;$('tour').disabled=pieces.length===0;$('enter').textContent='Entrar a la casona  →';updateSeen();animate();
 }
 
+let cabinetStarted = false;
 function enter() {
   if (!ready || entered) return;
   entered = true;
@@ -196,7 +201,7 @@ function hint(i){if(i<0){$('piece-hint').hidden=true;return;}$('piece-hint').hid
 $('gaming').onclick=()=>{if(!ready)return;enter();if(document.pointerLockElement)document.exitPointerLock();else renderer.domElement.requestPointerLock?.();};document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer?.domElement;$('gaming').textContent=locked?'Liberar ratón · Esc':'Modo gaming';$('gaming').setAttribute('aria-pressed',String(locked));$('crosshair').hidden=!locked;keys.clear();});document.addEventListener('pointerlockerror',()=>toast('Puedes seguir mirando al arrastrar el ratón.'));
 function cancelTour(){tween=null;if(guided){guided=false;$('tour').textContent='Recorrido guiado';$('tour-caption').textContent='Explora a tu ritmo.';}}
 document.addEventListener('keydown',e=>{if(!entered||isModal()||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','shift','e'].includes(k)){e.preventDefault();if(k==='e'){openPiece(guided?selected:nearest);return;}keys.add(k);cancelTour();}});document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();drag=null;});document.addEventListener('visibilitychange',()=>{clock?.getDelta();if(document.hidden){keys.clear();drag=null;}});
-const world=$('world');world.addEventListener('pointerdown',e=>{if(!entered||isModal())return;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:0};if(!locked)world.setPointerCapture(e.pointerId);});world.addEventListener('pointermove',e=>{if(!entered||isModal())return;if(locked){cancelTour();yaw-=e.movementX*.0022;pitch=Math.max(-.65,Math.min(.7,pitch-e.movementY*.0022));}else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);if(drag.moved>4){cancelTour();yaw-=dx*.004;pitch=Math.max(-.65,Math.min(.7,pitch-dy*.004));}drag.x=e.clientX;drag.y=e.clientY;}});world.addEventListener('pointerup',e=>{if(drag&&drag.moved<6&&ready){const ray=new THREE.Raycaster();ray.setFromCamera(locked?new THREE.Vector2(0,0):new THREE.Vector2((e.clientX/innerWidth)*2-1,1-(e.clientY/innerHeight)*2),camera);const hits=ray.intersectObjects(bottles);if(hits[0]){if(hits[0].object.userData.action==='dedication')readDedication();else if(hits[0].object.userData.action==='reserva')showDialog('reserva-dialog');else if(hits[0].object.userData.action==='screen')toggleFilm();else openPiece(hits[0].object.userData.piece);}}drag=null;});world.addEventListener('pointercancel',()=>drag=null);
+const world=$('world');world.addEventListener('pointerdown',e=>{if(!entered||isModal())return;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:0};if(!locked)world.setPointerCapture(e.pointerId);});world.addEventListener('pointermove',e=>{if(!entered||isModal())return;if(locked){cancelTour();yaw-=e.movementX*.0022;pitch=Math.max(-.65,Math.min(.7,pitch-e.movementY*.0022));}else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);if(drag.moved>4){cancelTour();yaw-=dx*.004;pitch=Math.max(-.65,Math.min(.7,pitch-dy*.004));}drag.x=e.clientX;drag.y=e.clientY;}});world.addEventListener('pointerup',e=>{if(drag&&drag.moved<6&&ready){const ray=new THREE.Raycaster();ray.setFromCamera(locked?new THREE.Vector2(0,0):new THREE.Vector2((e.clientX/innerWidth)*2-1,1-(e.clientY/innerHeight)*2),camera);const hits=ray.intersectObjects(bottles);if(hits[0]){if(hits[0].object.userData.action==='gabinete')location.assign('archivo/?pieza='+encodeURIComponent(hits[0].object.userData.recordId));else if(hits[0].object.userData.action==='dedication')readDedication();else if(hits[0].object.userData.action==='reserva')showDialog('reserva-dialog');else if(hits[0].object.userData.action==='screen')toggleFilm();else openPiece(hits[0].object.userData.piece);}}drag=null;});world.addEventListener('pointercancel',()=>drag=null);
 document.querySelectorAll('[data-move]').forEach(b=>{const k={forward:'w',back:'s',left:'a',right:'d'}[b.dataset.move];b.onpointerdown=e=>{e.preventDefault();keys.add(k);cancelTour();b.setPointerCapture(e.pointerId);};b.onpointerup=b.onpointercancel=()=>keys.delete(k);b.onlostpointercapture=()=>keys.delete(k);});
 function allowed(x,z){if(x< -8.9||x>8.9||z< -16.6||z>16.9)return false;return !casona?.obstacles.some(([l,r,a,b])=>x>l-.25&&x<r+.25&&z>a-.25&&z<b+.25);}
 
@@ -265,7 +270,7 @@ function showHero() {
   window.dispatchEvent(new Event('madrecita:portada'));
 }
 
-function locateAtlas(r){enter();document.exitPointerLock?.();keys.clear();tween=null;guided=true;selected=nearest=-1;hint(-1);camera.position.set(6.2,2.05,innerWidth/innerHeight<.68?1.43:.72);yaw=0;pitch=Math.atan2(1.83-camera.position.y,camera.position.z+3);$('tour-caption').textContent='Vitrina de consulta · '+r.name;$('tour').textContent='Salir de la visita guiada';}
+function locateAtlas(r,setting){enter();document.exitPointerLock?.();keys.clear();tween=null;guided=true;selected=nearest=-1;hint(-1);const [x,y,z]=setting.position,s=setting.scale;camera.position.set(x,y+2.05*s,z+(innerWidth/innerHeight<.68?4.43:3.72)*s);yaw=0;pitch=Math.atan2(y+1.83*s-camera.position.y,camera.position.z-z);$('tour-caption').textContent=setting.label+' · '+r.name;$('tour').textContent='Salir de la visita guiada';}
 const query=new URLSearchParams(location.search),station=query.get('estacion'),zones={muros:'walls',barra:'bar',comedor:'dining',lounge:'lounge',pantalla:'screen'};if(query.has('exhibir')){if(ready)enter();import('./visita-atlas.js').then(m=>m.abrirVitrina({THREE,scene,ready,id:query.get('exhibir'),locate:locateAtlas,addObstacle:b=>casona.obstacles.push(b)}));}else if(station!==null&&/^[0-5]$/.test(station)){stationsReady.then(()=>{const index=pieces.findIndex(p=>p.station===Number(station));
 if(index<0){if(ready)enter();toast('Esta estación no está disponible.');}else if(ready)goTo(index);else openPiece(index);});}else if(ready&&zones[query.get('zona')])visitZone(zones[query.get('zona')]);else if(ready&&query.has('entrar'))enter();
 

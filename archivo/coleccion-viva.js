@@ -1,5 +1,6 @@
 import { API_BASE } from '../admin/config.js';
 import { mergeCollection } from './indices-vivos.js';
+import {linkComparisons} from './curaduria.js';
 
 const dataRoot = new URL('./datos/', import.meta.url);
 const endpoint = API_BASE.replace(/\/+$/, '') + '/api/public';
@@ -30,6 +31,7 @@ async function load() {
     publicationStatus()
   ]);
   const merged = mergeCollection({ catalog, locations, producers, geography, changes: publication.changes });
+  linkComparisons(merged.catalog.records);
   signature = stateSignature(publication.changes);
   checkedAt = Date.now();
   return merged;

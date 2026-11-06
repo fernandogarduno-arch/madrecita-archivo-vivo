@@ -1,5 +1,6 @@
 import {photoDirectory} from './medios.js';
 import {API_BASE} from '../admin/config.js';
+import {studyFor} from './curaduria.js';
 
 export const housePhoto = new URL('../botella/referencia-cava.webp', import.meta.url).href;
 export const houseCaption = 'Imagen de referencia · Reserva Retana';
@@ -16,15 +17,18 @@ export function newImageBadge() {
 // La referencia pertenece a la interfaz, nunca a las fotos documentales de la ficha.
 export function showRecordImage(img, record, describe = () => {}, first = record.photos?.[0]) {
   const candidates = [first, ...(record.photos || []).filter(p => p !== first)].filter(Boolean);
+  const study = studyFor(record);
+  if (study) candidates.push(study);
   let next = 0;
   function showNext() {
     let url, photo;
     while (!url && next < candidates.length) {
       photo = candidates[next++];
-      url = resolvePublicPhoto(photo);
+      url = photo.editorial ? photo.url : resolvePublicPhoto(photo);
     }
     if (url) {
-      img.alt = record.name;
+      img.alt = photo.editorial ? photo.view+' · '+record.name : record.name;
+      img.dataset.imageKind = photo.kind || 'photo';
       describe(photo);
       img.onerror = showNext;
       img.src = url;
@@ -32,6 +36,7 @@ export function showRecordImage(img, record, describe = () => {}, first = record
       describe(null);
       img.onerror = null;
       img.alt = houseCaption;
+      img.dataset.imageKind = 'house';
       img.src = housePhoto;
     }
   }

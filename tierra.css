@@ -59,6 +59,9 @@
 #fuentes .land-note { display: block; margin: 1.8rem 0; background: var(--casa-fibra),var(--casa-cal); color: var(--casa-sombra); padding: 1.3rem 1.6rem; border-left: 3px solid var(--casa-cobre); text-decoration: none }
 #fuentes .land-note strong { display: block; font: 1.65rem Georgia,serif }
 .bottle-page header { padding: 1.4rem clamp(1rem,4vw,3rem); border-left: 3px solid var(--casa-cobre); background: var(--casa-fibra),#ece3d1 }
+img[data-image-kind="ai"] { outline:1px solid #a07749; outline-offset:-3px }
+.curator-note { border-left:2px solid #a07749;padding:.8em 1em;background:#f0e8d5;color:#24382c }
+.distinction-label { color:#695234;background:#f3e6cb;padding:.15em .4em;display:inline-block }
 @media(max-width:700px) {
   .territory-opening, .territory-columns, .territory-table { grid-template-columns: 1fr }
   .territory-title { padding: 2.5rem 1.3rem }

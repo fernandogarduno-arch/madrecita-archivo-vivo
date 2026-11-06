@@ -1,5 +1,6 @@
 // Madrecita · catálogo administrado.
 import { resolvePublicPhoto, housePhoto } from './archivo/foto-publica.js';
+import {studyFor, settingFor} from './archivo/curaduria.js';
 // Una fotografía o una cédula documental en un atril tridimensional.
 // baseURL apunta al directorio que contiene las rutas `photos[].src` del catálogo.
 function wrapText(context, value, width) {
@@ -46,6 +47,15 @@ async function documentaryPhoto(record) {
       // El archivo puede ofrecer una segunda vista aunque la primera no esté disponible.
     }
   }
+  const study = studyFor(record);
+  if (study) {
+    const image = new Image();
+    image.src = study.url;
+    try {
+      await image.decode();
+      return {image, reference: study, status: study.kind};
+    } catch { /* Si falla la lámina, sigue disponible la referencia de la casa. */ }
+  }
   const status = references.length ? 'error' : 'missing';
   const image = new Image();
   image.src = housePhoto;
@@ -57,10 +67,12 @@ async function documentaryPhoto(record) {
   }
 }
 
-export async function exhibirPieza({THREE, scene, record}) {
+export async function exhibirPieza({THREE, scene, record, montaje}) {
   const photo = await documentaryPhoto(record);
   const group = new THREE.Group();
-  group.position.set(6.2, 0, -3);
+  const setting = settingFor(montaje);
+  group.position.set(...setting.position);
+  group.scale.setScalar(setting.scale);
   group.name = 'Vitrina del atlas · ' + record.id;
   group.userData.recordId = record.id;
   group.userData.photoStatus = photo.status;
@@ -85,6 +97,13 @@ export async function exhibirPieza({THREE, scene, record}) {
   const lacquer = new THREE.MeshStandardMaterial({color: '#1c352e', roughness: .35});
   const brass = new THREE.MeshStandardMaterial({color: '#bf975c', metalness: .66, roughness: .35});
   const light = new THREE.MeshBasicMaterial({color: '#eed9ac', toneMapped: false});
+  let arch;
+  if (montaje === 'nicho') {
+    arch = new THREE.TorusGeometry(.87,.05,8,36,Math.PI);
+    const rim = new THREE.Mesh(arch,brass);
+    rim.position.set(0,3.34,-.04);
+    group.add(rim);
+  }
 
   // Peana biselada por escalones de piedra, pedestal verde y pasamanos de latón.
   box(basalt, 2.18, .14, 1.10, 0, .07, 0);
@@ -116,7 +135,7 @@ export async function exhibirPieza({THREE, scene, record}) {
       c.drawImage(photo.image, paper.x + (paper.width - w) / 2, paper.y + (paper.height - h) / 2, w, h);
       c.fillStyle = '#535747';
       c.font = '23px monospace';
-      c.fillText(photo.status !== 'available' ? 'REFERENCIA · RESERVA RETANA' : photo.reference.view ? 'VISTA CONJUNTA · '+photo.reference.folio : photo.reference.folio ? 'FOTOGRAFÍA · ' + photo.reference.folio : 'FOTOGRAFÍA DEL ARCHIVO', 38, 945, 692);
+      c.fillText(photo.reference?.editorial ? photo.reference.view.toUpperCase() : photo.status !== 'available' ? 'REFERENCIA · RESERVA RETANA' : photo.reference.view ? 'VISTA CONJUNTA · '+photo.reference.folio : photo.reference.folio ? 'FOTOGRAFÍA · ' + photo.reference.folio : 'FOTOGRAFÍA DEL ARCHIVO', 38, 945, 692);
     } else {
       c.fillStyle = '#19382d';
       c.font = '55px Georgia, serif';
@@ -164,6 +183,7 @@ export async function exhibirPieza({THREE, scene, record}) {
       group.removeFromParent();
       boxGeometry.dispose();
       planeGeometry.dispose();
+      arch?.dispose();
       for (const material of materials) {
         material.map?.dispose();
         material.dispose();
