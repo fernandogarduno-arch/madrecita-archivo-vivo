@@ -163,7 +163,6 @@ function enter() {
   if (!ready || entered) return;
   entered = true;
   $('hero-background').hidden = true;
-  $('hero-video').pause();
   $('welcome').hidden = true;
   $('hud').hidden = false;
   $('markers').hidden = false;
@@ -250,7 +249,6 @@ function showLightEntrance() {
   keys.clear();
   tween=null;
   $('hud').hidden=$('markers').hidden=$('welcome').hidden=true;
-  $('hero-video').pause();
   film.pause();
   document.exitPointerLock?.();
   window.showMuseumRecovery();
@@ -260,13 +258,11 @@ const stationsReady = loadStations();
 // Estado observable para las comprobaciones de navegación, colisiones y accesibilidad.
 window.madrecita={get state(){return{ready,entered,guided,selected,nearest,position:camera?camera.position.toArray():null,yaw,seen:[...seen],frames,objects:scene?.children.length,obstacles:casona?.obstacles,filmPlaying:!film.paused,filmTime:film.currentTime,bottleCount:casona?.bottleCount};},goTo,reset,openPiece};
 
-// Movimiento de portada voluntario y respetuoso de la preferencia de movimiento reducido.
-const hero=$('hero-video');
-function updateMotion(){const playing=!hero.paused;$('motion-toggle').textContent=playing?'Pausar animación':'Activar animación';$('motion-toggle').setAttribute('aria-pressed',String(playing));}
-function showHero(){if(!ready||entered)return;$('hero-background').hidden=false;if(!reduced)hero.play().then(updateMotion).catch(updateMotion);else updateMotion();}
-$('motion-toggle').onclick=()=>{if(hero.paused)hero.play().then(updateMotion).catch(()=>toast('La imagen sigue disponible. Pulsa para intentar reproducir la animación.'));else{hero.pause();updateMotion();}};
-hero.addEventListener('play',updateMotion);hero.addEventListener('pause',updateMotion);hero.addEventListener('error',()=>{$('motion-toggle').hidden=true;});
-showHero();
+function showHero() {
+  if (!ready || entered) return;
+  $('hero-background').hidden = false;
+  window.dispatchEvent(new Event('madrecita:portada'));
+}
 
 function locateAtlas(r){enter();document.exitPointerLock?.();keys.clear();tween=null;guided=true;selected=nearest=-1;hint(-1);camera.position.set(6.2,2.05,innerWidth/innerHeight<.68?1.43:.72);yaw=0;pitch=Math.atan2(1.83-camera.position.y,camera.position.z+3);$('tour-caption').textContent='Vitrina de consulta · '+r.name;$('tour').textContent='Salir de la visita guiada';}
 const query=new URLSearchParams(location.search),station=query.get('estacion'),zones={muros:'walls',barra:'bar',comedor:'dining',lounge:'lounge',pantalla:'screen'};if(query.has('exhibir')){if(ready)enter();import('./visita-atlas.js').then(m=>m.abrirVitrina({THREE,scene,ready,id:query.get('exhibir'),locate:locateAtlas,addObstacle:b=>casona.obstacles.push(b)}));}else if(station!==null&&/^[0-5]$/.test(station)){stationsReady.then(()=>{const index=pieces.findIndex(p=>p.station===Number(station));

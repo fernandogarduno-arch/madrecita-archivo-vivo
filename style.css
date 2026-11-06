@@ -11,12 +11,15 @@
 @media(max-width:750px){.room-label{right:20px}.room-label p{font-size:18px;line-height:1.3;max-width:330px}}
 
 /* La imagen aportada se convierte en la portada cinematográfica. */
-#hero-background{position:fixed;inset:0;z-index:1;background:#173c32 url(assets/portada-viva.png) center/cover;pointer-events:none}
-#hero-video{height:100%;width:100%;object-fit:cover;display:block}
+#hero-background{position:fixed;inset:0;z-index:1;overflow:hidden;background:#173c32;pointer-events:none}
+#hero-background picture,#hero-background img{display:block;width:100%;height:100%}
+#hero-background img{object-fit:cover;animation:portada-respira 28s ease-in-out infinite alternate;animation-play-state:paused}
+#hero-background[data-motion="on"] img{animation-play-state:running}
+@keyframes portada-respira{from{transform:scale(1)}to{transform:scale(1.035)}}
 #welcome{background:linear-gradient(90deg,#072b252e,transparent 68%)}
 #motion-toggle{position:absolute;right:5vw;bottom:76px;background:#102e28b8;border:1px solid #d3be8b66;padding:11px 15px;color:#f4f0e7;font-size:10px;backdrop-filter:blur(12px)}
 .intro-caption{background:#102e28c9}
-@media(max-width:750px){#hero-video{object-position:61% center}#hero-background{background-position:61% center}#welcome{background:linear-gradient(90deg,#092e25c9, #092e251f)}#motion-toggle{right:22px;bottom:76px}}
+@media(max-width:750px){#welcome{background:linear-gradient(90deg,#092e25c9, #092e251f)}#motion-toggle{right:22px;bottom:76px}}
 
 .evidence-link{display:inline-block;color:#f2dfb6;margin-left:12px;text-underline-offset:4px}.evidence-link:focus-visible{outline:2px solid #f2dfb6;outline-offset:5px}
 @media(max-width:750px){.evidence-link{margin:8px 0 0;display:block}}
