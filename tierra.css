@@ -1,0 +1,68 @@
+:root {
+  --casa-cal: #e9dfc9;
+  --casa-hoja: #284a3b;
+  --casa-cobre: #a56845;
+  --casa-sombra: #262e29;
+  --casa-fibra: repeating-linear-gradient(0deg, transparent 0 4px, #685c3b12 4px 5px);
+}
+.territory-page {
+  margin: 0;
+  color: var(--casa-sombra);
+  background: #f4efe3;
+  font: 1rem/1.55 "Segoe UI", sans-serif;
+}
+.territory-page * { box-sizing: border-box }
+.territory-page a { color: inherit; text-underline-offset: .32em }
+.territory-page a:focus-visible { outline: 3px solid currentColor; outline-offset: .25em }
+.territory-header, .territory-footer {
+  display: flex; justify-content: space-between; align-items: center; gap: 1.2rem;
+  padding: 1rem clamp(1.2rem, 6vw, 7rem); background: #18382e; color: var(--casa-cal);
+}
+.territory-signature { display: flex; align-items: center; gap: .8rem; text-decoration: none }
+.territory-signature img { width: 32px; height: 40px }
+.territory-signature span { font: 1.45rem Georgia, serif }
+.territory-signature small, .territory-kicker {
+  display: block; font: 650 .68rem/1.5 "Segoe UI", sans-serif; text-transform: uppercase; letter-spacing: .17em;
+}
+.territory-header > a:last-child, .territory-footer a { font-size: .85rem }
+.territory-opening { display: grid; grid-template-columns: 1fr 1fr; min-height: min(78vh, 820px) }
+.territory-title {
+  padding: clamp(2rem, 6vw, 7rem); display: flex; flex-direction: column; justify-content: center; align-items: flex-start;
+  background: linear-gradient(110deg,#f3eddfed,#e6d8c2eb),url("assets/piedra/losa-color.webp") center / cover;
+}
+.territory-title h1, .territory-page h2 { font-family: Georgia, serif; font-weight: 400; letter-spacing: -.055em }
+.territory-title h1 { font-size: clamp(4.2rem,8.3vw,9rem); line-height: .92; margin: .27em 0 }
+.territory-title h1 em { color: var(--casa-hoja) }
+.territory-title p, .territory-table p { max-width: 34em; font-size: clamp(1rem,1.3vw,1.23rem) }
+.territory-link { display: inline-block; margin-top: .8em; font-weight: 600 }
+.territory-opening figure { position: relative; margin: 0; min-height: 100%; overflow: hidden }
+.territory-opening figure img { position: absolute; width: 100%; height: 100%; object-fit: cover; object-position: center 52% }
+.territory-opening figcaption { position: absolute; inset: auto 0 0; padding: 2.5rem 1.3rem .8rem; background: linear-gradient(transparent,#141c16eb); color: white; font-size: .78rem }
+.territory-materials { padding: clamp(2.3rem,6vw,7rem); border-top: 4px solid var(--casa-cobre) }
+.territory-page h2 { font-size: clamp(2.5rem,5vw,5.8rem); line-height: 1.02; margin: .22em 0 .5em }
+.territory-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem 5vw; max-width: 78rem }
+.territory-columns p { max-width: 42em; margin: .4em 0 }
+.territory-swatches { margin-top: 2.5rem; display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem }
+.territory-swatches span { font-size: .82rem }
+.territory-swatches span::before { content: ""; display: block; background: var(--casa-fibra),var(--tone); height: 2.7rem; margin-bottom: .4rem }
+.territory-table { display: grid; grid-template-columns: 1fr 1fr; background: var(--casa-sombra); color: #f6efdf }
+.territory-table img { width: 100%; height: 100%; min-height: 310px; object-fit: cover }
+.territory-table > div { padding: clamp(2rem,5vw,6rem) }
+.territory-actions { display: flex; gap: 1rem 1.5rem; flex-wrap: wrap; margin-top: 2rem }
+.territory-footer { flex-wrap: wrap }
+/* En la entrada, la fibra enmarca la firma y la piedra acompaña las fotos reales. */
+#welcome .intro-caption { background: linear-gradient(115deg,#19382ff2,#233b30e8); border-left: 3px solid #c39772 }
+#welcome .intro-footer { border-top: 1px solid #e9dfc961; padding-top: .65rem }
+#welcome .intro .overline { color: #f0d6ac }
+#salon .salon-copy::before { background: linear-gradient(100deg,#172f27f2,#1e3528cd),url("assets/muro/foto-4.jpeg") center 43% / cover }
+#salon { border-bottom: 3px solid var(--casa-cobre) }
+#fuentes .land-note { display: block; margin: 1.8rem 0; background: var(--casa-fibra),var(--casa-cal); color: var(--casa-sombra); padding: 1.3rem 1.6rem; border-left: 3px solid var(--casa-cobre); text-decoration: none }
+#fuentes .land-note strong { display: block; font: 1.65rem Georgia,serif }
+.bottle-page header { padding: 1.4rem clamp(1rem,4vw,3rem); border-left: 3px solid var(--casa-cobre); background: var(--casa-fibra),#ece3d1 }
+@media(max-width:700px) {
+  .territory-opening, .territory-columns, .territory-table { grid-template-columns: 1fr }
+  .territory-title { padding: 2.5rem 1.3rem }
+  .territory-opening figure { min-height: 48vh }
+  .territory-swatches { grid-template-columns: 1fr 1fr }
+  .territory-table img { min-height: 0; aspect-ratio: 16/9 }
+}
