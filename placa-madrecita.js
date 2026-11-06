@@ -46,15 +46,15 @@ export function mountPlaque(scene, renderer) {
   face.position.z = .055; face.userData.action = 'dedication'; mount.add(face);
   const anchor = mount.localToWorld(new THREE.Vector3(0, -height/2 - .13, .06));
   const projection = new THREE.Vector3();
-  const button = document.getElementById('plaque-read');
+  const actions = document.getElementById('plaque-actions');
   return { face, update(camera, available) {
     projection.copy(anchor).project(camera);
     const visible = available && camera.position.distanceTo(center) < 8 && Math.abs(projection.x)<.82 &&
       Math.abs(projection.y)<.73 && projection.z>0 && projection.z<1;
-    button.hidden = !visible;
+    actions.hidden = !visible;
     if (visible) {
-      button.style.left = (projection.x*.5+.5)*100+'%';
-      button.style.top = (.5-projection.y*.5)*100+'%';
+      actions.style.left = (projection.x*.5+.5)*100+'%';
+      actions.style.top = (.5-projection.y*.5)*100+'%';
     }
   }};
 }

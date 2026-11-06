@@ -195,6 +195,16 @@ function readDedication() {
   if (!$('dedication-dialog').open) showDialog('dedication-dialog');
 }
 $('plaque-read').onclick = readDedication;
+function enterMuseumFromPlaque() {
+  if ($('dedication-dialog').open) $('dedication-dialog').close();
+  if (!ready) {
+    location.assign('archivo/');
+    return;
+  }
+  visitZone('lounge');
+}
+$('plaque-enter').onclick = enterMuseumFromPlaque;
+$('letter-enter').onclick = enterMuseumFromPlaque;
 const publicPortal = 'https://fernandogarduno-arch.github.io/madrecita-archivo-vivo/';
 function sharePortal(dedication) {
   $('share-title').textContent = dedication ? 'Compartir dedicatoria' : 'Compartir portal';

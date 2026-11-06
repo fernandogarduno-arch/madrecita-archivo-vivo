@@ -1,4 +1,6 @@
-#plaque-read { position:absolute; transform:translate(-50%,0); pointer-events:auto; min-height:44px; border:1px solid #ba9d6d; border-radius:3px; padding:5px 16px; background:#18382ff5; color:#fff0cf; font:15px Georgia,serif; white-space:nowrap; }
+#plaque-actions { position:absolute; transform:translate(-50%,0); pointer-events:auto; }
+#plaque-actions:not([hidden]) { display:grid; gap:4px; }
+#plaque-actions button { min-height:44px; border:1px solid #ba9d6d; border-radius:3px; padding:5px 16px; background:#18382ff5; color:#fff0cf; font:15px Georgia,serif; white-space:nowrap; }
 #dedication-dialog, #share-dialog { width:min(31rem, calc(100vw - 30px)); padding:clamp(25px,5vw,48px); text-align:center; border:1px solid #b99b66; }
 #dedication-dialog { color:#f5e9d1; background:linear-gradient(145deg,#254538,#152f26); }
 #dedication-dialog .close { color:#f7e8c9; }
@@ -7,6 +9,8 @@
 #dedication-dialog .letter { font:clamp(17px,2vw,20px)/1.55 Georgia,serif; text-align:start; }
 #dedication-dialog .letter p { font:inherit; margin:0 0 .75em; }
 #dedication-dialog .signature { color:#ebd2a1; font:italic 21px Georgia,serif; text-align:right; margin:18px 0 26px; }
+#plaque-actions #plaque-enter, #dedication-dialog #letter-enter { color:#18382f; background:#f2dfb5; border:1px solid #bda273; }
+#dedication-dialog #letter-enter { display:block; margin:0 auto 10px; }
 #dedication-dialog button.share-link { color:#f0d5a4; }
 .share-link { background:transparent; border:none; color:inherit; font:inherit; text-decoration:underline; text-underline-offset:4px; padding:5px; }
 #share-dialog input { display:block; width:100%; box-sizing:border-box; margin:14px 0; padding:10px; font:14px system-ui; }
