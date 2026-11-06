@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Carta de sobremesa · Madrecita</title>
+  <link rel="icon" href="../assets/retana-app.svg">
+  <link rel="stylesheet" href="../tierra.css">
+  <style>
+    .paper-table { padding: 2.5rem 1rem; background: linear-gradient(#18241deb,#18241de8),url("../assets/muro/foto-6.jpeg") center/cover }
+    .paper-card { width: min(100%, 122mm); margin: auto; padding: clamp(1.6rem,5vw,2.8rem); background: var(--casa-fibra),#f3ebda; border-top: 5px solid var(--casa-cobre); box-shadow: 0 1rem 3rem #0004 }
+    .paper-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--casa-hoja) }
+    .paper-top img { width: 3.2rem }
+    .paper-card h1 { margin: .5em 0 .3em; font: 400 clamp(2.7rem,5vw,3.6rem)/.98 Georgia,serif; letter-spacing: -.055em }
+    .paper-card h2 { font-size: 1.45rem; letter-spacing: -.025em; margin: 1.25rem 0 .4rem }
+    .paper-card p { margin: .3rem 0; line-height: 1.45 }
+    .paper-card .write { border-bottom: 1px solid #8c836e; padding: .4rem 0 .5rem; font-size: .88rem; color: #48574c }
+    .paper-sign { margin-top: 1.4rem; font-size: .8rem; letter-spacing: .12em; text-transform: uppercase }
+    .paper-nav { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1.4rem; margin-top: 1.3rem; color: var(--casa-cal) }
+    .paper-nav button { background: #efe3ca; color: #18382e; padding: .65rem 1rem; font: inherit; border: 0; cursor: pointer }
+    @page { size: A5; margin: 10mm }
+    @media print {
+      .territory-header,.paper-nav { display: none }
+      .paper-table,.territory-page { background: white; padding: 0 }
+      .paper-card { max-width: 100%; box-shadow: none; padding: 5mm; border-top: 1mm solid #a56845; break-inside: avoid; print-color-adjust: exact }
+      .paper-card h1 { font-size: 32pt }
+    }
+  </style>
+</head>
+<body class="territory-page">
+  <header class="territory-header"><a class="territory-signature" href="../"><img src="../assets/retana-agave-claro.svg" alt=""><span>Madrecita<small>Familia Retana</small></span></a><a href="../archivo/#mesa">La Mesa ↗</a></header>
+  <main class="paper-table">
+    <article class="paper-card">
+      <div class="paper-top"><img src="../assets/retana-agave.svg" alt="La R de Retana dentro del agave"><span class="territory-kicker">La Mesa Madrecita<br>Yucatán</span></div>
+      <h1>Carta de<br><em>sobremesa.</em></h1>
+      <p>Elige una botella del estante. Pídele a quien la guardó que te cuente cómo llegó a esta casa.</p>
+      <h2>La pieza de hoy</h2>
+      <p class="write">Botella</p><p class="write">Productor y lugar de origen</p>
+      <h2>La memoria que se queda</h2>
+      <p>¿Quién estaba en la mesa cuando escuchaste esta historia por primera vez?</p>
+      <p class="write">Me la contó</p><p class="write">Quiero recordar</p>
+      <div class="paper-sign">Colección de Jesús Retana</div>
+    </article>
+    <nav class="paper-nav"><button type="button" onclick="window.print()">Imprimir carta</button><a href="../archivo/">Elegir una botella ↗</a></nav>
+  </main>
+</body>
+</html>
