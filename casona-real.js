@@ -26,7 +26,7 @@ export function createCasona(scene,renderer,video,compact){
  scene.background=new T.Color('#1d2725');scene.fog=new T.Fog('#202b29',32,74);
  const env=new T.Scene();env.background=new T.Color('#8b8273');mesh(new T.BoxGeometry(30,18,40),new T.MeshBasicMaterial({color:'#c5ab86',side:T.BackSide}),0,0,0,env,false);const pm=new T.PMREMGenerator(renderer);scene.environment=pm.fromScene(env,.04).texture;scene.environmentIntensity=.33;pm.dispose();
  const wallsReady = createStoneWalls(scene, renderer,compact);
- const floorMaterial=createStoneFloor(T,renderer),barMaterial=createBarStone(T,renderer);
+ const floorMaterial=createStoneFloor(T,renderer,compact),barMaterial=createBarStone(T,renderer,compact);
  box(22,.2,36,floorMaterial,0,-.1,0);
  box(.3,7.3,36,stone,-11,3.65,0);box(22,7.3,.3,plaster,0,3.65,18);box(22,.18,36,plaster,0,7.3,0);
  box(.85,.018,36,green,-9.35,.015,0);box(.16,.02,36,black,-8.83,.02,0);box(.12,.02,36,black,-9.88,.02,0);

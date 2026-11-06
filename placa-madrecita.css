@@ -30,4 +30,5 @@ html[data-entry] #fallback {
 #fallback h2 { font:42px Georgia,serif; margin:6px; }
 #fallback p { margin:4px 0 9px; }
 #fallback a,#retry-world { display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:170px; padding:8px 14px; color:#fff2d7; background:#1b382f; border:1px solid #bcaa83; text-decoration:none; }
+@media(max-width:750px) { body:has(#plaque-actions:not([hidden])) .demo-badge { display:none; } }
 @media(max-height:490px) { html[data-entry] #fallback { justify-content:flex-start; } }

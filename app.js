@@ -34,7 +34,7 @@ const isModal=()=>!!document.querySelector('dialog[open]');
 function toast(text){$('toast').textContent=text;$('toast').classList.add('visible');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.remove('visible'),3500);}
 function showDialog(id){keys.clear();document.exitPointerLock?.();$(id).showModal();}
 document.querySelectorAll('dialog').forEach(d=>{d.querySelector('.close').onclick=()=>d.close();d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}});});
-$('curator').onclick=()=>showDialog('curator-dialog');$('collection').onclick=()=>showDialog('collection-dialog');$('help').onclick=()=>showDialog('help-dialog');$('retry-world').onclick=()=>location.reload();
+$('curator').onclick=()=>showDialog('curator-dialog');$('collection').onclick=()=>showDialog('collection-dialog');$('help').onclick=()=>showDialog('help-dialog');
 async function loadStations() {
   let publication;
   try { publication = await loadPublicCollection(); }
@@ -153,7 +153,10 @@ function build(){
  });
  renderer.debug.onShaderError = () => showLightEntrance();
  casona=createCasona(scene,renderer,film,compact3D);plaque=mountPlaque(scene,renderer);bottles.push(...casona.selectables,plaque.face);
- clock=new THREE.Clock();ready=true;$('enter').disabled=false;$('guided').disabled=pieces.length===0;$('tour').disabled=pieces.length===0;$('enter').textContent='Entrar a la casona  →';updateSeen();animate();
+ clock=new THREE.Clock();ready=true;
+ document.documentElement.dataset.worldReady='';
+ if(document.documentElement.dataset.entry==='light') delete document.documentElement.dataset.entry;
+ $('enter').disabled=false;$('guided').disabled=pieces.length===0;$('tour').disabled=pieces.length===0;$('enter').textContent='Entrar a la casona  →';updateSeen();animate();
 }
 
 function enter() {
@@ -250,9 +253,7 @@ function showLightEntrance() {
   $('hero-video').pause();
   film.pause();
   document.exitPointerLock?.();
-  document.documentElement.dataset.entry='light';
-  $('entry-status').textContent='Visita la cava en su versión ligera.';
-  $('retry-world').hidden=false;
+  window.showMuseumRecovery();
 }
 try { build(); } catch(error) { console.warn('Sala 3D',error);showLightEntrance(); }
 const stationsReady = loadStations();

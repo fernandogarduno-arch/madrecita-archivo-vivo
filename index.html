@@ -16,7 +16,7 @@
   <p>Para ti, mamá, con todo nuestro amor.</p></div>
   <p id="entry-status" role="status">Preparando la sala 3D…</p>
   <a href="archivo/#fuentes">Leer dedicatoria</a><a href="archivo/">Entrar a La Cava</a>
-  <button id="retry-world" hidden type="button">Reintentar la sala 3D</button>
+  <a id="retry-world" hidden href="?entrar=1">Reintentar la sala 3D</a>
 </section>
 
 <dialog id="dedication-dialog" aria-labelledby="dedication-title">
@@ -45,4 +45,14 @@
   </video>
 </dialog>
 <audio id="identity-audio" preload="none" src="assets/jingle.mp3"></audio>
-<script type="module" src="app.js"></script></body></html>
+<script>
+function showMuseumRecovery() {
+  document.documentElement.dataset.entry = 'light';
+  document.getElementById('entry-status').textContent = 'Visita la cava en su versión ligera.';
+  document.getElementById('retry-world').hidden = false;
+}
+setTimeout(function () {
+  if (!document.documentElement.hasAttribute('data-world-ready')) showMuseumRecovery();
+}, 15000);
+</script>
+<script type="module" src="app.js" onerror="showMuseumRecovery()"></script></body></html>

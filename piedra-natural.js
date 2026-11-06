@@ -1,6 +1,6 @@
 // Materiales sintéticos para la propuesta nocturna. El color, el relieve y la
 // rugosidad comparten las mismas coordenadas. No requieren shaders propios.
-function createStoneMaterial(T, renderer, stone) {
+function createStoneMaterial(T, renderer, stone, compact) {
   const material = new T.MeshStandardMaterial({
     color: stone.fallback,
     roughness: stone.roughness,
@@ -15,7 +15,7 @@ function createStoneMaterial(T, renderer, stone) {
     ['roughnessMap', 'rugosidad'],
     ['bumpMap', 'relieve']
   ];
-  material.userData.ready = Promise.all(maps.map(async ([property, suffix]) => {
+  material.userData.ready = Promise.all((compact ? maps.slice(0,1) : maps).map(async ([property, suffix]) => {
     const url = new URL('./assets/piedra/' + stone.slug + '-' + suffix + '.webp', import.meta.url).href;
     try {
       const texture = await loader.loadAsync(url);
@@ -37,18 +37,18 @@ function createStoneMaterial(T, renderer, stone) {
   return material;
 }
 
-export function createStoneFloor(T, renderer) {
+export function createStoneFloor(T, renderer, compact) {
   return createStoneMaterial(T, renderer, {
     name: 'Caliza cálida · losas de acabado apomazado',
     slug: 'losa', fallback: '#aa9c81', roughness: .68, bumpScale: .011,
     repeat: [22 / 6, 36 / 6]
-  });
+  }, compact);
 }
 
-export function createBarStone(T, renderer) {
+export function createBarStone(T, renderer, compact) {
   return createStoneMaterial(T, renderer, {
     name: 'Piedra verde veteada · cubierta satinada',
     slug: 'barra', fallback: '#465045', roughness: .48, bumpScale: .003
-  });
+  }, compact);
 }
 
