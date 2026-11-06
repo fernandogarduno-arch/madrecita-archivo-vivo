@@ -268,12 +268,11 @@ function addStationPlates(T, group, pieces, selectables, markerPoints) {
   });
 }
 
-export function createPhotoWall({ THREE:T, scene, renderer, pieces, selectables, markerPoints, obstacles }) {
+export function createPhotoWall({ THREE:T, scene, renderer, selectables, markerPoints, obstacles }) {
   const group = new T.Group();
   group.name = 'Muro de la colección · interpretación fotográfica';
   scene.add(group);
   const ready = addPhotographicInterior(T,group,renderer);
   buildFurniture(T,group,obstacles);
-  addStationPlates(T,group,pieces,selectables,markerPoints);
-  return {group,ready};
+  return {group,ready,addStations(pieces){addStationPlates(T,group,pieces,selectables,markerPoints);}};
 }

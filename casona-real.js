@@ -5,7 +5,7 @@ import * as T from './vendor/three.module.js';
 
 // Maqueta visual basada en el video del usuario. Unidades relativas, no medidas del inmueble.
 // Las formas de botella son representativas; no constituyen un inventario de piezas reales.
-export function createCasona(scene,renderer,pieces,video){
+export function createCasona(scene,renderer,video,compact){
  const selectables=[],obstacles=[],markerPoints=[];let seed=6125,bottleCount=0;
  const rand=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
  function tex(w,h,fn){const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);const t=new T.CanvasTexture(c);t.colorSpace=T.SRGBColorSpace;t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return t;}
@@ -25,7 +25,7 @@ export function createCasona(scene,renderer,pieces,video){
  // Noche de casa: luz local, piedra sintética y una base ambiental que conserva el pasillo legible.
  scene.background=new T.Color('#1d2725');scene.fog=new T.Fog('#202b29',32,74);
  const env=new T.Scene();env.background=new T.Color('#8b8273');mesh(new T.BoxGeometry(30,18,40),new T.MeshBasicMaterial({color:'#c5ab86',side:T.BackSide}),0,0,0,env,false);const pm=new T.PMREMGenerator(renderer);scene.environment=pm.fromScene(env,.04).texture;scene.environmentIntensity=.33;pm.dispose();
- const wallsReady = createStoneWalls(scene, renderer);
+ const wallsReady = createStoneWalls(scene, renderer,compact);
  const floorMaterial=createStoneFloor(T,renderer),barMaterial=createBarStone(T,renderer);
  box(22,.2,36,floorMaterial,0,-.1,0);
  box(.3,7.3,36,stone,-11,3.65,0);box(22,7.3,.3,plaster,0,3.65,18);box(22,.18,36,plaster,0,7.3,0);
@@ -39,7 +39,7 @@ export function createCasona(scene,renderer,pieces,video){
  const geos=shapes.map(p=>new T.LatheGeometry(p.map(a=>new T.Vector2(...a)),16));
  geos.push(new T.BoxGeometry(.3,.58,.2).translate(0,.29,0));
  const colors=['#d8c486','#ece4c8','#c09a51','#7d4a23','#567761','#32665f','#25352a','#ddd7c7','#35516f','#a8492d'];
- const materials=colors.map((color,i)=>new T.MeshPhysicalMaterial({color,roughness:i===7?.52:.18,metalness:.08,clearcoat:1,envMapIntensity:.65}));
+ const materials=colors.map((color,i)=>compact ? new T.MeshStandardMaterial({color,roughness:.42,metalness:.08}) : new T.MeshPhysicalMaterial({color,roughness:i===7?.52:.18,metalness:.08,clearcoat:1,envMapIntensity:.65}));
  const capGeo=new T.CylinderGeometry(.064,.064,.1,10),capMat=mat('#bba376',.36,.5),labelGeo=new T.PlaneGeometry(.16,.23);
  const labelTex=tex(64,96,(c,w,h)=>{c.fillStyle='#e1d5b7';c.fillRect(0,0,w,h);c.strokeStyle='#9d8f72';c.strokeRect(4,4,w-8,h-8);c.fillStyle='#756c53';c.fillRect(18,25,28,2);c.fillRect(12,51,40,2);c.fillRect(21,61,22,2);});const labelMat=new T.MeshStandardMaterial({map:labelTex,roughness:.9});
  const batches=new Map(),caps=[],labels=[];const dummy=new T.Object3D();
@@ -51,7 +51,7 @@ export function createCasona(scene,renderer,pieces,video){
  for(const x of [-3.5,0,3.5,7,10.5])box(.1,3.1,.12,black,x,5.42,-17);
  for(const [key,list] of batches){const [type,color]=key.split('-').map(Number);const inst=new T.InstancedMesh(geos[type],materials[color],list.length);list.forEach((p,i)=>{dummy.position.set(p.x,p.y,p.z);dummy.rotation.set(0,p.rot,0);dummy.scale.setScalar(p.scale);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);});inst.receiveShadow=true;scene.add(inst);}
  for(const [geo,material,list] of [[capGeo,capMat,caps],[labelGeo,labelMat,labels]]){const inst=new T.InstancedMesh(geo,material,list.length);list.forEach((p,i)=>{dummy.position.set(p.x,p.y,p.z);dummy.rotation.set(0,p.rot,0);dummy.scale.setScalar(p.scale);dummy.updateMatrix();inst.setMatrixAt(i,dummy.matrix);});scene.add(inst);}
- const photoWall=createPhotoWall({THREE:T,scene,renderer,pieces,selectables,markerPoints,obstacles});
+ const photoWall=createPhotoWall({THREE:T,scene,renderer,selectables,markerPoints,obstacles});
  function sofa(x,z,rot,w=5.4){const g=new T.Group();g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);rounded(w,.35,1.65,fabric,0,.42,0,g);rounded(w,.9,.34,fabric,0,1.05,.65,g);for(const xx of [-w/2+.12,w/2-.12])rounded(.28,.65,1.65,fabric,xx,.77,0,g);for(let i=0;i<3;i++){rounded((w-.7)/3-.03,.24,1.2,fabric,(i-1)*(w-.7)/3,.73,-.1,g);const p=rounded(.68,.62,.2,pillow,(i-1)*(w-.7)/3,1.13,.4,g);p.rotation.z=(i-1)*.1;}for(const xx of [-w/2+.3,w/2-.3])for(const zz of [-.55,.55])cyl(.055,.055,.25,black,xx,.12,zz,g);}
  sofa(-4.25,7.5,0);sofa(-4.25,-1.3,Math.PI);sofa(.1,-10,0,5);
  obstacles.push([-7.1,-1.4,6.55,8.45],[-7.1,-1.4,-2.25,-.35],[-2.6,2.8,-10.95,-9.05]);
@@ -73,7 +73,7 @@ export function createCasona(scene,renderer,pieces,video){
  for(let i=0;i<45;i++)box(.09,1.3,.08,wood,-7.93+i*.196,.77,13.91,scene,false);
  const amber=new T.MeshBasicMaterial({color:'#ffc37a'});box(8.95,.035,.06,amber,-3.6,1.46,13.90,scene,false);
  box(8.65,.045,.07,copper,-3.6,.22,13.81);box(8.65,.055,.07,copper,-3.6,1.48,13.81);
- for(const x of [-5.7,-3.7,-1.7]){const l=new T.PointLight('#ffce95',18,7.7,2);l.position.set(x,3.25,14);scene.add(l);
+ for(const x of [-5.7,-3.7,-1.7]){const l=new T.PointLight('#ffce95',18,7.7,2);l.position.set(x,3.25,14);if(!compact||x===-3.7)scene.add(l);
  cyl(.016,.016,3.4,black,x,5.42,14.55);const hood=cyl(.16,.42,.4,copper,x,3.55,14.55);mesh(new T.CircleGeometry(.33,24),amber,x,3.33,14.55).rotation.x=-Math.PI/2;}
  for(const x of [-5.25,-4.93,-4.61]){cyl(.055,.07,.016,copper,x,1.67,14.5);cyl(.014,.014,.085,metal,x,1.71,14.5);cyl(.080,.036,.12,mat('#d7d2ad',.22,.37),x,1.80,14.5);}
  // Trasbarra interpretativa: paño de madera, sello verificado y franja de luz baja.
@@ -99,5 +99,5 @@ export function createCasona(scene,renderer,pieces,video){
  scene.add(new T.HemisphereLight('#a9b6bc','#52473a',.49));
  const sun=new T.DirectionalLight('#ffdfb8',.48);sun.position.set(8,9,13);sun.target.position.set(-7,1,-4);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-24,right:24,top:24,bottom:-24,near:.1,far:65});sun.shadow.normalBias=.04;scene.add(sun,sun.target);
  for(const z of [-12,-3,7]){const l=new T.PointLight('#ffcc87',47,13,2);l.position.set(-8.8,4,z);scene.add(l);}
- return {selectables,obstacles,markerPoints,screen,stoneReady:Promise.all([floorMaterial.userData.ready,barMaterial.userData.ready,wallsReady]),photoWallReady:photoWall.ready,playScreen:()=>{screenMat.map=videoTexture;screenMat.needsUpdate=true;},bottleCount};
+ return {selectables,obstacles,markerPoints,screen,addStations:photoWall.addStations,stoneReady:Promise.all([floorMaterial.userData.ready,barMaterial.userData.ready,wallsReady]),photoWallReady:photoWall.ready,playScreen:()=>{screenMat.map=videoTexture;screenMat.needsUpdate=true;},bottleCount};
 }

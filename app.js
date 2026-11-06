@@ -8,14 +8,13 @@ const $=id=>document.getElementById(id);
 import {pieces as inaugural} from './seleccion.js';
 import {loadPublicCollection} from './archivo/coleccion-viva.js';
 import {resolvePublicPhoto} from './archivo/foto-publica.js';
-let publication;
-try {
-  publication = await loadPublicCollection();
-} catch (error) {
-  console.warn('Estaciones de colección indisponibles', error);
-}
+let pieces = [];
+let catalogLoaded = false;
+const compact3D = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
+
+function stationPieces(publication) {
 const activeRecords = new Map((publication?.catalog.records || []).map(row => [row.id,row]));
-const pieces = inaugural.flatMap((source,station)=>{
+return inaugural.flatMap((source,station)=>{
   const row = activeRecords.get(source.id);
   if (!row) return [];
   const image = row.photos[0];
@@ -26,20 +25,35 @@ const pieces = inaugural.flatMap((source,station)=>{
     photo:resolvePublicPhoto(image), folio:image?.folio || 'Sin folio consignado'
   }];
 });
+}
 let renderer,scene,camera,clock,ready=false,entered=false,yaw=0,pitch=0,tween=null,selected=-1,guided=false,locked=false,drag=null,frames=0,nearest=-1;
 const keys=new Set(),bottles=[],markers=[],seen=new Set();
 let plaque, casona;const film=document.createElement("video");film.src="assets/pelicula.mp4?ed=retana";film.preload="none";film.playsInline=true;film.crossOrigin="anonymous";
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-try{JSON.parse(localStorage.getItem('madrecita-pasaportes-v3')||'[]').filter(id=>pieces.some(piece=>piece.id===id)).forEach(id=>seen.add(id));}catch{}
 const isModal=()=>!!document.querySelector('dialog[open]');
 function toast(text){$('toast').textContent=text;$('toast').classList.add('visible');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('toast').classList.remove('visible'),3500);}
 function showDialog(id){keys.clear();document.exitPointerLock?.();$(id).showModal();}
 document.querySelectorAll('dialog').forEach(d=>{d.querySelector('.close').onclick=()=>d.close();d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}});});
-$('curator').onclick=()=>showDialog('curator-dialog');$('collection').onclick=()=>showDialog('collection-dialog');$('help').onclick=()=>showDialog('help-dialog');$('fallback-list').onclick=()=>showDialog('collection-dialog');
+$('curator').onclick=()=>showDialog('curator-dialog');$('collection').onclick=()=>showDialog('collection-dialog');$('help').onclick=()=>showDialog('help-dialog');$('retry-world').onclick=()=>location.reload();
+async function loadStations() {
+  let publication;
+  try { publication = await loadPublicCollection(); }
+  catch (err) { console.warn('No se pudieron cargar las estaciones',err); }
+  pieces = stationPieces(publication);
+  catalogLoaded = !!publication;
+try{JSON.parse(localStorage.getItem('madrecita-pasaportes-v3')||'[]').filter(id=>pieces.some(piece=>piece.id===id)).forEach(id=>seen.add(id));}catch{}
 document.querySelector('#collection .count').textContent=String(pieces.length).padStart(2,'0');
 if(!pieces.length) $('piece-list').textContent=publication?'No hay piezas activas en esta exposición.':'La colección no se pudo confirmar. Recarga para volver a intentarlo.';
 pieces.forEach((p,i)=>{const b=document.createElement('button');b.className='piece-card';for(const [tag,value] of [['span','0'+(i+1)+' / '+p.theme],['h3',p.name],['p','Descubrir esta pieza ↗']]){const n=document.createElement(tag);n.textContent=value;b.append(n);}b.onclick=()=>{$('collection-dialog').close();if(ready){enter();goTo(i);}else openPiece(i);};$('piece-list').append(b);});
-function updateSeen(){ $('visited').textContent=`${seen.size} / ${pieces.length}`;markers.forEach((m,i)=>m.classList.toggle('seen',seen.has(pieces[i].id)));try{localStorage.setItem('madrecita-pasaportes-v3',JSON.stringify([...seen]));}catch{}}
+  if (ready) {
+    casona.addStations(pieces);
+    bottles.splice(0,bottles.length,...casona.selectables,plaque.face);
+    mountMarkers();
+    $('guided').disabled = $('tour').disabled = !pieces.length;
+  }
+  updateSeen();
+}
+function updateSeen(){ $('visited').textContent=`${seen.size} / ${pieces.length}`;markers.forEach((m,i)=>m.classList.toggle('seen',seen.has(pieces[i].id)));if(catalogLoaded)try{localStorage.setItem('madrecita-pasaportes-v3',JSON.stringify([...seen]));}catch{}}
 function openPiece(i){if(i<0||i>=pieces.length)return;selected=i;const p=pieces[i];seen.add(p.id);updateSeen();$('detail-id').textContent='PASAPORTE / '+p.id;$('detail-index').textContent='0'+(i+1);$('detail-title').textContent=p.name;$('detail-theme').textContent=p.theme;$('detail-intro').textContent=p.intro;$('detail-note').textContent=p.note;$('detail-photo').src=p.photo;$('full-passport').href='archivo/?pieza='+p.id;$('detail-fields').replaceChildren();for(const [k,v] of [['Productor',p.producer],['NOM consignado',p.nom],['Libro','Sheet3 · fila '+p.row],['Folio fotográfico',p.folio]]){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=v||'Sin dato';$('detail-fields').append(dt,dd);}showDialog('detail');}
 $('detail-next').onclick=()=>{$('detail').close();if(ready){enter();goTo((selected+1)%pieces.length);}else openPiece((selected+1)%pieces.length);};
 const audio = $('identity-audio');
@@ -127,11 +141,18 @@ trailerDialog.addEventListener('close', () => {
 });
 if (location.hash === '#pelicula') openTrailer(false);
 
+function mountMarkers() {
+ pieces.forEach((p,i)=>{const marker=document.createElement('button');marker.className='marker';marker.textContent=`0${i+1}`;marker.setAttribute('aria-label',`Ir a ${p.name}`);marker.onclick=()=>goTo(i);$('markers').append(marker);markers.push(marker);});
+}
 function build(){
  scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.08,100);camera.rotation.order='YXZ';[yaw,pitch]=entranceView(camera);
- renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.84;renderer.outputColorSpace=THREE.SRGBColorSpace;$('world').append(renderer.domElement);
- casona=createCasona(scene,renderer,pieces,film);plaque=mountPlaque(scene,renderer);bottles.push(...casona.selectables,plaque.face);
- pieces.forEach((p,i)=>{const marker=document.createElement('button');marker.className='marker';marker.textContent=`0${i+1}`;marker.setAttribute('aria-label',`Ir a ${p.name}`);marker.onclick=()=>goTo(i);$('markers').append(marker);markers.push(marker);});
+ renderer=new THREE.WebGLRenderer({antialias:!compact3D,powerPreference:compact3D?'default':'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,compact3D?1:1.5));renderer.shadowMap.enabled=!compact3D;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.84;renderer.outputColorSpace=THREE.SRGBColorSpace;$('world').append(renderer.domElement);
+ renderer.domElement.addEventListener('webglcontextlost', event => {
+   event.preventDefault();
+   showLightEntrance();
+ });
+ renderer.debug.onShaderError = () => showLightEntrance();
+ casona=createCasona(scene,renderer,film,compact3D);plaque=mountPlaque(scene,renderer);bottles.push(...casona.selectables,plaque.face);
  clock=new THREE.Clock();ready=true;$('enter').disabled=false;$('guided').disabled=pieces.length===0;$('tour').disabled=pieces.length===0;$('enter').textContent='Entrar a la casona  →';updateSeen();animate();
 }
 
@@ -215,23 +236,40 @@ function advanceCamera(dt, elapsed) {
   if(progress===1) tween=null;
 }
 
-function animate(){requestAnimationFrame(animate);if(document.hidden)return;if(!entered){clock.getDelta();return;}const elapsed=clock.getDelta(), dt=Math.min(elapsed,.04);if(entered&&!isModal()){if(tween) advanceCamera(dt,elapsed);else move(dt);if(!guided){let best=-1,dist=4.5;pieces.forEach((p,i)=>{const d=Math.hypot(camera.position.x-p.x,camera.position.z-p.z);if(d<dist){best=i;dist=d;}});if(best!==nearest){nearest=best;hint(best);}}}camera.rotation.set(pitch,yaw,0,'YXZ');renderer.render(scene,camera);if(frames++%2===0){updateMarkers();if(entered)mapDraw();}}
+function animate(){if(!ready)return;requestAnimationFrame(animate);if(document.hidden)return;if(!entered){clock.getDelta();return;}const elapsed=clock.getDelta(), dt=Math.min(elapsed,.04);if(entered&&!isModal()){if(tween) advanceCamera(dt,elapsed);else move(dt);if(!guided){let best=-1,dist=4.5;pieces.forEach((p,i)=>{const d=Math.hypot(camera.position.x-p.x,camera.position.z-p.z);if(d<dist){best=i;dist=d;}});if(best!==nearest){nearest=best;hint(best);}}}camera.rotation.set(pitch,yaw,0,'YXZ');try {renderer.render(scene,camera);} catch(error) {console.warn('Render 3D',error);showLightEntrance();return;}
+ if(!ready)return;
+ if(document.documentElement.dataset.entry==='loading')delete document.documentElement.dataset.entry;
+ if(frames++%2===0){updateMarkers();if(entered)mapDraw();}}
 window.addEventListener('resize',()=>{if(!ready)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
-try{build();}catch(e){console.error('No se pudo iniciar la sala 3D:',e);$('fallback').hidden=false;$('enter').textContent='Ver la colección';$('enter').disabled=false;$('enter').onclick=()=>showDialog('collection-dialog');$('world').style.background='linear-gradient(#0b2c2566,#0b2c2566),url(assets/portada.jpg) center/cover';}
+function showLightEntrance() {
+  ready=false;
+  entered=false;
+  keys.clear();
+  tween=null;
+  $('hud').hidden=$('markers').hidden=$('welcome').hidden=true;
+  $('hero-video').pause();
+  film.pause();
+  document.exitPointerLock?.();
+  document.documentElement.dataset.entry='light';
+  $('entry-status').textContent='Visita la cava en su versión ligera.';
+  $('retry-world').hidden=false;
+}
+try { build(); } catch(error) { console.warn('Sala 3D',error);showLightEntrance(); }
+const stationsReady = loadStations();
 // Estado observable para las comprobaciones de navegación, colisiones y accesibilidad.
 window.madrecita={get state(){return{ready,entered,guided,selected,nearest,position:camera?camera.position.toArray():null,yaw,seen:[...seen],frames,objects:scene?.children.length,obstacles:casona?.obstacles,filmPlaying:!film.paused,filmTime:film.currentTime,bottleCount:casona?.bottleCount};},goTo,reset,openPiece};
 
 // Movimiento de portada voluntario y respetuoso de la preferencia de movimiento reducido.
 const hero=$('hero-video');
 function updateMotion(){const playing=!hero.paused;$('motion-toggle').textContent=playing?'Pausar animación':'Activar animación';$('motion-toggle').setAttribute('aria-pressed',String(playing));}
-function showHero(){$('hero-background').hidden=false;if(!reduced)hero.play().then(updateMotion).catch(updateMotion);else updateMotion();}
+function showHero(){if(!ready||entered)return;$('hero-background').hidden=false;if(!reduced)hero.play().then(updateMotion).catch(updateMotion);else updateMotion();}
 $('motion-toggle').onclick=()=>{if(hero.paused)hero.play().then(updateMotion).catch(()=>toast('La imagen sigue disponible. Pulsa para intentar reproducir la animación.'));else{hero.pause();updateMotion();}};
 hero.addEventListener('play',updateMotion);hero.addEventListener('pause',updateMotion);hero.addEventListener('error',()=>{$('motion-toggle').hidden=true;});
 showHero();
 
 function locateAtlas(r){enter();document.exitPointerLock?.();keys.clear();tween=null;guided=true;selected=nearest=-1;hint(-1);camera.position.set(6.2,2.05,innerWidth/innerHeight<.68?1.43:.72);yaw=0;pitch=Math.atan2(1.83-camera.position.y,camera.position.z+3);$('tour-caption').textContent='Vitrina de consulta · '+r.name;$('tour').textContent='Salir de la visita guiada';}
-const query=new URLSearchParams(location.search),station=query.get('estacion'),zones={muros:'walls',barra:'bar',comedor:'dining',lounge:'lounge',pantalla:'screen'};if(query.has('exhibir')){if(ready)enter();import('./visita-atlas.js').then(m=>m.abrirVitrina({THREE,scene,ready,id:query.get('exhibir'),locate:locateAtlas,addObstacle:b=>casona.obstacles.push(b)}));}else if(station!==null&&/^[0-5]$/.test(station)){const index=pieces.findIndex(p=>p.station===Number(station));
-if(index<0){if(ready)enter();toast('Esta estación no está disponible.');}else if(ready)goTo(index);else openPiece(index);}else if(ready&&zones[query.get('zona')])visitZone(zones[query.get('zona')]);else if(ready&&query.has('entrar'))enter();
+const query=new URLSearchParams(location.search),station=query.get('estacion'),zones={muros:'walls',barra:'bar',comedor:'dining',lounge:'lounge',pantalla:'screen'};if(query.has('exhibir')){if(ready)enter();import('./visita-atlas.js').then(m=>m.abrirVitrina({THREE,scene,ready,id:query.get('exhibir'),locate:locateAtlas,addObstacle:b=>casona.obstacles.push(b)}));}else if(station!==null&&/^[0-5]$/.test(station)){stationsReady.then(()=>{const index=pieces.findIndex(p=>p.station===Number(station));
+if(index<0){if(ready)enter();toast('Esta estación no está disponible.');}else if(ready)goTo(index);else openPiece(index);});}else if(ready&&zones[query.get('zona')])visitZone(zones[query.get('zona')]);else if(ready&&query.has('entrar'))enter();
 
 function readDedication() {
   if (!$('dedication-dialog').open) showDialog('dedication-dialog');
@@ -256,7 +294,7 @@ function enterMuseumFromPlaque() {
 }
 $('plaque-enter').onclick = enterMuseumFromPlaque;
 $('letter-enter').onclick = enterMuseumFromPlaque;
-const publicPortal = 'https://fernandogarduno-arch.github.io/madrecita-archivo-vivo/';
+const publicPortal = 'https://madrecita.gamasis.app/';
 function sharePortal(dedication) {
   $('share-title').textContent = dedication ? 'Compartir dedicatoria' : 'Compartir portal';
   $('share-url').value = publicPortal + (dedication ? '?entrar=1#dedicatoria' : '');

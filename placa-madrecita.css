@@ -17,3 +17,17 @@
 #share-dialog label { display:block; margin-top:12px; }
 #share-dialog .close { color:#173c32; }
 #share-feedback { min-height:1.5em; }
+
+#fallback { display:none; }
+html[data-entry] #fallback {
+  display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px;
+  box-sizing:border-box; position:fixed; inset:0; z-index:11; margin:0; max-width:none; overflow:auto;
+  padding:20px; color:#fff2d7; text-align:center;
+  background:linear-gradient(#142b20bb,#10221aeb),url(archivo/sala/6.jpeg) center/cover;
+}
+.light-plaque { width:min(330px,90%); padding:20px; background:#18382f; border:2px solid #bca276; outline:1px solid #bca276; outline-offset:-7px; }
+.light-plaque img { width:52px; height:63px; }
+#fallback h2 { font:42px Georgia,serif; margin:6px; }
+#fallback p { margin:4px 0 9px; }
+#fallback a,#retry-world { display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:170px; padding:8px 14px; color:#fff2d7; background:#1b382f; border:1px solid #bcaa83; text-decoration:none; }
+@media(max-height:490px) { html[data-entry] #fallback { justify-content:flex-start; } }

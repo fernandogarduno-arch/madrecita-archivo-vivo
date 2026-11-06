@@ -7,9 +7,9 @@ const halfDepth = 17.85;
 const height = 7.3;
 const tileSize = 4;
 
-function wallPanel(width, startDistance, material) {
+function wallPanel(width, startDistance, material,compact) {
   const geometry = new THREE.PlaneGeometry(
-    width, height, Math.ceil(width / 0.15), Math.ceil(height / 0.15)
+    width, height, compact ? 1 : Math.ceil(width / 0.15), compact ? 1 : Math.ceil(height / 0.15)
   );
   const positions = geometry.attributes.position;
   const uvs = geometry.attributes.uv;
@@ -24,7 +24,7 @@ function wallPanel(width, startDistance, material) {
   return mesh;
 }
 
-export function createStoneWalls(scene, renderer) {
+export function createStoneWalls(scene, renderer, compact) {
   const material = new THREE.MeshStandardMaterial({
     name: 'Piedra careada de la colección',
     color: '#9e8e77',
@@ -34,11 +34,11 @@ export function createStoneWalls(scene, renderer) {
     displacementScale: 0.048
   });
 
-  const tvWall = wallPanel(halfWidth * 2, 0, material);
+  const tvWall = wallPanel(halfWidth * 2, 0, material,compact);
   tvWall.name = 'Piedra · muro de la televisión';
   tvWall.position.set(0, height / 2, -halfDepth);
 
-  const artWall = wallPanel(halfDepth * 2, halfWidth * 2, material);
+  const artWall = wallPanel(halfDepth * 2, halfWidth * 2, material,compact);
   artWall.name = 'Piedra · muro del cuadro';
   artWall.rotation.y = -Math.PI / 2;
   artWall.position.set(halfWidth, height / 2, 0);
@@ -58,7 +58,8 @@ export function createStoneWalls(scene, renderer) {
     ['roughnessMap', 'rugosidad'],
     ['displacementMap', 'altura']
   ];
-  return Promise.all(maps.map(async ([slot, suffix]) => {
+  const layers = compact ? maps.filter(([slot]) => slot === 'map' || slot === 'normalMap') : maps;
+  return Promise.all(layers.map(async ([slot, suffix]) => {
     const url = new URL('./assets/mamposteria/muro-' + suffix + '.webp', import.meta.url);
     try {
       const texture = await loader.loadAsync(url.href);
