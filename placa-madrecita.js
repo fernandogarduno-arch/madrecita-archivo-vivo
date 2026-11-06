@@ -31,8 +31,8 @@ export function mountPlaque(scene, renderer) {
     ctx.fillStyle = '#bba276'; ctx.beginPath(); ctx.arc(x, y, 6, 0, 2*Math.PI); ctx.fill();
   }
   ctx.textAlign = 'center'; ctx.fillStyle = '#f6e7c9';
-  ctx.font = '112px Georgia, serif'; ctx.fillText('Madrecita', 700, 495);
-  ctx.font = 'italic 47px Georgia, serif'; ctx.fillText('El nombre es para ti, mamá.', 700, 599);
+  ctx.font = '112px Georgia, serif'; ctx.fillText('Retana', 700, 495);
+  ctx.font = 'italic 47px Georgia, serif'; ctx.fillText('Para ti, mamá, con todo nuestro amor.', 700, 599);
   ctx.fillStyle = '#d1b786'; ctx.fillRect(640, 660, 120, 2);
   ctx.font = '36px Georgia, serif'; ctx.fillText('Jesús Retana', 700, 740);
   const texture = new THREE.CanvasTexture(canvas);

@@ -5,6 +5,7 @@
 #dedication-dialog img { width:56px; height:auto; }
 #dedication-dialog h2 { font:normal clamp(32px,5vw,46px)/1.1 Georgia,serif; margin:16px 0 20px; }
 #dedication-dialog .letter { font:clamp(17px,2vw,20px)/1.55 Georgia,serif; text-align:start; }
+#dedication-dialog .letter p { font:inherit; margin:0 0 .75em; }
 #dedication-dialog .signature { color:#ebd2a1; font:italic 21px Georgia,serif; text-align:right; margin:18px 0 26px; }
 #dedication-dialog button.share-link { color:#f0d5a4; }
 .share-link { background:transparent; border:none; color:inherit; font:inherit; text-decoration:underline; text-underline-offset:4px; padding:5px; }
