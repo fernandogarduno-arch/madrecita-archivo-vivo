@@ -1,0 +1,34 @@
+name: Publicar Madrecita
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: madrecita-pages
+  cancel-in-progress: false
+
+jobs:
+  museo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Preparar la edición pública
+        run: python .github/construir-pages.py "$RUNNER_TEMP/madrecita-pages"
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ runner.temp }}/madrecita-pages
+      - name: Publicar
+        id: publicar
+        uses: actions/deploy-pages@v5
+        with:
+          timeout: 1800000
