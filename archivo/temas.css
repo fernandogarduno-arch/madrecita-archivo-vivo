@@ -189,3 +189,7 @@
   [data-selector-tema] button { min-height: 35px; padding: 6px 9px; }
 }
 
+
+.thumb:has(.ref-tag), .rb-photo:has(.ref-tag) { position:relative }
+.thumb .ref-tag, .rb-photo .ref-tag { position:absolute; z-index:2; bottom:.35rem; left:50%; transform:translateX(-50%); width:max-content; max-width:96%; margin:0; padding:.2rem .5rem; color:#fff5db; background:#21372e; border-radius:3px; font:11px/1.25 system-ui,sans-serif }
+.ref-tag[hidden] { display:none }

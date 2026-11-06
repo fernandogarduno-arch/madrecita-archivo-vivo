@@ -120,3 +120,7 @@ label:has(.required) input { display:block; margin-top:6px; }
   .top-actions a,.quiet { font-size:11px; }
   .status-filter button { padding:7px 8px; }
 }
+
+.thumb, .preview { position:relative }
+.thumb small:not([hidden]), .preview small:not([hidden]) { position:absolute; bottom:0; max-width:100%; background:#1b352f; color:#f5ecdc; padding:1px 3px; font:9px/1.2 system-ui,sans-serif }
+.thumb small[hidden], .preview small[hidden] { display:none }

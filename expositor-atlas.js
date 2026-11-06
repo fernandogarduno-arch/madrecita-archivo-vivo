@@ -1,5 +1,5 @@
 // Madrecita · catálogo administrado.
-import { resolvePublicPhoto } from './archivo/foto-publica.js';
+import { resolvePublicPhoto, housePhoto } from './archivo/foto-publica.js';
 // Una fotografía o una cédula documental en un atril tridimensional.
 // baseURL apunta al directorio que contiene las rutas `photos[].src` del catálogo.
 function wrapText(context, value, width) {
@@ -46,7 +46,15 @@ async function documentaryPhoto(record) {
       // El archivo puede ofrecer una segunda vista aunque la primera no esté disponible.
     }
   }
-  return {image: null, reference: null, status: references.length ? 'error' : 'missing'};
+  const status = references.length ? 'error' : 'missing';
+  const image = new Image();
+  image.src = housePhoto;
+  try {
+    await image.decode();
+    return {image, reference: null, status};
+  } catch {
+    return {image: null, reference: null, status};
+  }
 }
 
 export async function exhibirPieza({THREE, scene, record}) {
@@ -108,7 +116,7 @@ export async function exhibirPieza({THREE, scene, record}) {
       c.drawImage(photo.image, paper.x + (paper.width - w) / 2, paper.y + (paper.height - h) / 2, w, h);
       c.fillStyle = '#535747';
       c.font = '23px monospace';
-      c.fillText(photo.reference.folio ? 'FOTOGRAFÍA · ' + photo.reference.folio : 'FOTOGRAFÍA DEL ARCHIVO', 38, 945, 692);
+      c.fillText(photo.status !== 'available' ? 'REFERENCIA · RESERVA RETANA' : photo.reference.view ? 'VISTA CONJUNTA · '+photo.reference.folio : photo.reference.folio ? 'FOTOGRAFÍA · ' + photo.reference.folio : 'FOTOGRAFÍA DEL ARCHIVO', 38, 945, 692);
     } else {
       c.fillStyle = '#19382d';
       c.font = '55px Georgia, serif';

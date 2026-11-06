@@ -1,4 +1,5 @@
 import {API_BASE} from './config.js';
+import {housePhoto,houseCaption,resolvePublicPhoto} from '../archivo/foto-publica.js';
 
 const $ = id => document.getElementById(id);
 const form = $('bottle-form');
@@ -74,13 +75,31 @@ function safePhoto(value) {
   } catch { return ''; }
 }
 
-function picture(container, url, empty='Sin foto') {
-  container.replaceChildren();
-  if (!url) { container.append(document.createTextNode(empty)); return; }
-  const image = node('img');
-  image.alt = ''; image.loading = 'lazy'; image.src = url;
-  image.addEventListener('error',()=>container.replaceChildren(document.createTextNode('Foto no disponible')),{once:true});
-  container.append(image);
+let archiveImages;
+async function loadArchiveImages() {
+  if (archiveImages) return;
+  try {
+    const response = await fetch(new URL('../archivo/datos/catalogo.json', import.meta.url));
+    if (response.ok) {
+      const catalog = await response.json();
+      archiveImages = new Map(catalog.records.map(r => [r.id, r.photos]));
+    }
+  } catch { /* Se puede editar usando la foto del servicio aunque falle el catálogo. */ }
+}
+function picture(container, url, id) {
+  const image = node('img'), label = node('small','Referencia');
+  const archive = (archiveImages?.get(id) || []).map(resolvePublicPhoto);
+  const urls = [...new Set([url, ...archive].filter(Boolean))];
+  image.loading = 'lazy';
+  container.replaceChildren(image, label);
+  function next() {
+    const src = urls.shift();
+    label.hidden = Boolean(src);
+    image.alt = src ? 'Fotografía de la colección' : houseCaption;
+    image.onerror = src ? next : null;
+    image.src = src || housePhoto;
+  }
+  next();
 }
 
 function regionName(slug) {
@@ -98,7 +117,7 @@ function option(value, label) {
 
 async function refresh() {
   const currentToken = state.token;
-  const data = await api('/api/admin');
+  const [data] = await Promise.all([api('/api/admin'),loadArchiveImages()]);
   if (!currentToken || state.token !== currentToken) return;
   if (!Array.isArray(data.records) || !Array.isArray(data.regions)) throw new Error('El servicio no devolvió el inventario completo.');
   state.regions = data.regions;
@@ -144,7 +163,7 @@ function render() {
   for (const row of rows.slice(state.page*PAGE_SIZE,(state.page+1)*PAGE_SIZE)) {
     const b = node('button',null,'entry'); b.type='button'; b.dataset.id=row.id;
     b.setAttribute('aria-label','Editar '+displayName(row)+' · '+row.id);
-    const thumb = node('span',null,'thumb'); picture(thumb,safePhoto(row.photo));
+    const thumb = node('span',null,'thumb'); picture(thumb,safePhoto(row.photo),row.id);
     const info = node('span'); info.append(node('span',row.id,'meta'),node('strong',displayName(row)));
     info.append(node('small',[row.brand===row.model?'':row.brand,row.category].filter(Boolean).join(' · ')));
     b.append(thumb,info,node('span',[row.place,regionName(row.region)].filter(Boolean).join(' · '),'location'),stateBadge(row.active));
@@ -184,7 +203,7 @@ function openEditor(record=null, focus=true) {
     $('change-state').textContent = record.active ? 'Desactivar botella' : 'Reactivar botella';
   }
   $('undo-photo').hidden=true; $('refresh-record').hidden=true;
-  status('edit-status'); status('photo-status'); picture($('photo-preview'),safePhoto(record?.photo));
+  status('edit-status'); status('photo-status'); picture($('photo-preview'),safePhoto(record?.photo),record?.id);
   syncButtons();
   if (!editor.open) editor.showModal();
   if (focus) form.elements.model.focus({preventScroll:true});
@@ -243,7 +262,7 @@ $('file').onchange=async()=>{
 };
 $('undo-photo').onclick=()=>{
   state.photoTask++; state.photo=null; state.resizing=false; $('file').value=''; $('undo-photo').hidden=true;
-  picture($('photo-preview'),safePhoto(state.record?.photo)); status('photo-status'); syncButtons();
+  picture($('photo-preview'),safePhoto(state.record?.photo),state.record?.id); status('photo-status'); syncButtons();
 };
 
 function replaceRecord(record) {

@@ -8,7 +8,7 @@ import {createCasona} from './casona-real.js';
 const $=id=>document.getElementById(id);
 import {pieces as inaugural} from './seleccion.js';
 import {loadPublicCollection} from './archivo/coleccion-viva.js';
-import {resolvePublicPhoto} from './archivo/foto-publica.js';
+import {resolvePublicPhoto,showRecordImage,houseCaption} from './archivo/foto-publica.js';
 let pieces = [];
 let catalogLoaded = false;
 const compact3D = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
@@ -23,7 +23,7 @@ return inaugural.flatMap((source,station)=>{
     ...source, station, x:-9.8, z:12-station*5,
     name:row.name, producer:row.producer, nom:row.nomSource||row.nom,
     intro:[row.category,row.volume,row.detail].filter(Boolean).join(' · '),
-    photo:resolvePublicPhoto(image), folio:image?.folio || 'Sin folio consignado'
+    photos:row.photos, photo:resolvePublicPhoto(image), folio:image?.folio || 'Sin folio consignado'
   }];
 });
 }
@@ -55,7 +55,7 @@ pieces.forEach((p,i)=>{const b=document.createElement('button');b.className='pie
   updateSeen();
 }
 function updateSeen(){ $('visited').textContent=`${seen.size} / ${pieces.length}`;markers.forEach((m,i)=>m.classList.toggle('seen',seen.has(pieces[i].id)));if(catalogLoaded)try{localStorage.setItem('madrecita-pasaportes-v3',JSON.stringify([...seen]));}catch{}}
-function openPiece(i){if(i<0||i>=pieces.length)return;selected=i;const p=pieces[i];seen.add(p.id);updateSeen();$('detail-id').textContent='PASAPORTE / '+p.id;$('detail-index').textContent='0'+(i+1);$('detail-title').textContent=p.name;$('detail-theme').textContent=p.theme;$('detail-intro').textContent=p.intro;$('detail-note').textContent=p.note;$('detail-photo').src=p.photo;$('full-passport').href='archivo/?pieza='+p.id;$('detail-fields').replaceChildren();for(const [k,v] of [['Productor',p.producer],['NOM consignado',p.nom],['Libro','Sheet3 · fila '+p.row],['Folio fotográfico',p.folio]]){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=v||'Sin dato';$('detail-fields').append(dt,dd);}showDialog('detail');}
+function openPiece(i){if(i<0||i>=pieces.length)return;selected=i;const p=pieces[i];seen.add(p.id);updateSeen();$('detail-id').textContent='PASAPORTE / '+p.id;$('detail-index').textContent='0'+(i+1);$('detail-title').textContent=p.name;$('detail-theme').textContent=p.theme;$('detail-intro').textContent=p.intro;$('detail-note').textContent=p.note;showRecordImage($('detail-photo'),p,photo=>{$('detail-reference').hidden=Boolean(photo);$('detail-reference').textContent=houseCaption});$('full-passport').href='archivo/?pieza='+p.id;$('detail-fields').replaceChildren();for(const [k,v] of [['Productor',p.producer],['NOM consignado',p.nom],['Libro','Sheet3 · fila '+p.row],['Folio fotográfico',p.folio]]){const dt=document.createElement('dt'),dd=document.createElement('dd');dt.textContent=k;dd.textContent=v||'Sin dato';$('detail-fields').append(dt,dd);}showDialog('detail');}
 $('detail-next').onclick=()=>{$('detail').close();if(ready){enter();goTo((selected+1)%pieces.length);}else openPiece((selected+1)%pieces.length);};
 const audio = $('identity-audio');
 const welcomeKey = 'madrecita-jingle-bienvenida-v1';

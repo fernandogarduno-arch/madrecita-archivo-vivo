@@ -1,6 +1,34 @@
 import {photoDirectory} from './medios.js';
 import {API_BASE} from '../admin/config.js';
 
+export const housePhoto = new URL('../botella/referencia-cava.webp', import.meta.url).href;
+export const houseCaption = 'Imagen de referencia · Reserva Retana';
+
+// La referencia pertenece a la interfaz, nunca a las fotos documentales de la ficha.
+export function showRecordImage(img, record, describe = () => {}, first = record.photos?.[0]) {
+  const candidates = [first, ...(record.photos || []).filter(p => p !== first)].filter(Boolean);
+  let next = 0;
+  function showNext() {
+    let url, photo;
+    while (!url && next < candidates.length) {
+      photo = candidates[next++];
+      url = resolvePublicPhoto(photo);
+    }
+    if (url) {
+      img.alt = record.name;
+      describe(photo);
+      img.onerror = showNext;
+      img.src = url;
+    } else {
+      describe(null);
+      img.onerror = null;
+      img.alt = houseCaption;
+      img.src = housePhoto;
+    }
+  }
+  showNext();
+}
+
 export function resolvePublicPhoto(photo) {
   if (!photo || typeof photo.src !== 'string') return '';
   try {
