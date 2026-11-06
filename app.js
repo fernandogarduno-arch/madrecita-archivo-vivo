@@ -1,5 +1,6 @@
 // Madrecita · catálogo administrado.
 import * as THREE from './vendor/three.module.js';
+import {mountPlaque, entranceView} from './placa-madrecita.js';
 import {createCasona} from './casona-real.js';
 
 const $=id=>document.getElementById(id);
@@ -26,7 +27,7 @@ const pieces = inaugural.flatMap((source,station)=>{
 });
 let renderer,scene,camera,clock,ready=false,entered=false,yaw=0,pitch=0,tween=null,selected=-1,guided=false,locked=false,drag=null,frames=0,nearest=-1;
 const keys=new Set(),bottles=[],markers=[],seen=new Set();
-let casona;const film=document.createElement("video");film.src="assets/pelicula.mp4?ed=retana";film.preload="none";film.playsInline=true;film.crossOrigin="anonymous";
+let plaque, casona;const film=document.createElement("video");film.src="assets/pelicula.mp4?ed=retana";film.preload="none";film.playsInline=true;film.crossOrigin="anonymous";
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 try{JSON.parse(localStorage.getItem('madrecita-pasaportes-v3')||'[]').filter(id=>pieces.some(piece=>piece.id===id)).forEach(id=>seen.add(id));}catch{}
 const isModal=()=>!!document.querySelector('dialog[open]');
@@ -126,9 +127,9 @@ trailerDialog.addEventListener('close', () => {
 if (location.hash === '#pelicula') openTrailer(false);
 
 function build(){
- scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.08,100);camera.position.set(6,3.1,16.7);camera.rotation.order='YXZ';yaw=.58;pitch=-.12;
+ scene=new THREE.Scene();camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.08,100);camera.rotation.order='YXZ';[yaw,pitch]=entranceView(camera);
  renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.84;renderer.outputColorSpace=THREE.SRGBColorSpace;$('world').append(renderer.domElement);
- casona=createCasona(scene,renderer,pieces,film);bottles.push(...casona.selectables);
+ casona=createCasona(scene,renderer,pieces,film);plaque=mountPlaque(scene,renderer);bottles.push(...casona.selectables,plaque.face);
  pieces.forEach((p,i)=>{const marker=document.createElement('button');marker.className='marker';marker.textContent=`0${i+1}`;marker.setAttribute('aria-label',`Ir a ${p.name}`);marker.onclick=()=>goTo(i);$('markers').append(marker);markers.push(marker);});
  clock=new THREE.Clock();ready=true;$('enter').disabled=false;$('guided').disabled=pieces.length===0;$('tour').disabled=pieces.length===0;$('enter').textContent='Entrar a la casona  →';updateSeen();animate();
 }
@@ -143,8 +144,8 @@ function enter() {
   $('markers').hidden = false;
   void playWelcome();
 }
-function reset(){if(!ready)return;document.exitPointerLock?.();keys.clear();tween=null;guided=false;selected=-1;nearest=-1;camera.position.set(6,3.1,16.7);yaw=.58;pitch=-.12;$('piece-hint').hidden=true;$('tour-caption').textContent='Explora a tu ritmo.';$('tour').textContent='Recorrido guiado';}
-$('home').onclick=e=>{e.preventDefault();reset();entered=false;$('welcome').hidden=false;$('hud').hidden=true;$('markers').hidden=true;showHero();};$('reset').onclick=reset;$('enter').onclick=()=>{enter();toast(innerWidth<750?'Usa las flechas para caminar y desliza para mirar.':'W A S D para caminar · Arrastra para mirar · Pulsa una pieza para descubrirla');};$('guided').onclick=()=>{enter();goTo(0);};$('curator-tour').onclick=()=>{$('curator-dialog').close();if(ready){enter();goTo(0);}else showDialog('collection-dialog');};$('tour').onclick=()=>{if(guided){guided=false;tween=null;$('tour').textContent='Recorrido guiado';$('tour-caption').textContent='Explora a tu ritmo.';}else goTo(selected<0?0:selected);};
+function reset(){if(!ready)return;document.exitPointerLock?.();keys.clear();tween=null;guided=false;selected=-1;nearest=-1;[yaw,pitch]=entranceView(camera);$('piece-hint').hidden=true;$('tour-caption').textContent='Explora a tu ritmo.';$('tour').textContent='Recorrido guiado';}
+$('home').onclick=e=>{e.preventDefault();reset();entered=false;$('welcome').hidden=false;$('hud').hidden=true;$('markers').hidden=true;showHero();};$('reset').onclick=reset;$('enter').onclick=()=>{enter();$('tour-caption').textContent=innerWidth<750?'Desliza para mirar · Flechas para caminar':'Arrastra para mirar · W A S D para caminar';};$('guided').onclick=()=>{enter();goTo(0);};$('curator-tour').onclick=()=>{$('curator-dialog').close();if(ready){enter();goTo(0);}else showDialog('collection-dialog');};$('tour').onclick=()=>{if(guided){guided=false;tween=null;$('tour').textContent='Recorrido guiado';$('tour-caption').textContent='Explora a tu ritmo.';}else goTo(selected<0?0:selected);};
 function routeTo(to,target){
  const from=camera.position.clone();const candidates=[from,to];for(const x of [-8.3,.5,4,8.7])for(const z of [-16,-12,-7,-4,0,2,10.8,13,16.7])if(allowed(x,z))candidates.push(new THREE.Vector3(x,2.55,z));
  const clear=(a,b)=>{const n=Math.ceil(a.distanceTo(b)/.2);for(let i=1;i<=n;i++){const t=i/n;if(!allowed(a.x+(b.x-a.x)*t,a.z+(b.z-a.z)*t))return false;}return true;};
@@ -164,14 +165,14 @@ function hint(i){if(i<0){$('piece-hint').hidden=true;return;}$('piece-hint').hid
 $('gaming').onclick=()=>{if(!ready)return;enter();if(document.pointerLockElement)document.exitPointerLock();else renderer.domElement.requestPointerLock?.();};document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer?.domElement;$('gaming').textContent=locked?'Liberar ratón · Esc':'Modo gaming';$('gaming').setAttribute('aria-pressed',String(locked));$('crosshair').hidden=!locked;keys.clear();});document.addEventListener('pointerlockerror',()=>toast('Puedes seguir mirando al arrastrar el ratón.'));
 function cancelTour(){tween=null;if(guided){guided=false;$('tour').textContent='Recorrido guiado';$('tour-caption').textContent='Explora a tu ritmo.';}}
 document.addEventListener('keydown',e=>{if(!entered||isModal()||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','shift','e'].includes(k)){e.preventDefault();if(k==='e'){openPiece(guided?selected:nearest);return;}keys.add(k);cancelTour();}});document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();drag=null;});document.addEventListener('visibilitychange',()=>{if(document.hidden){keys.clear();drag=null;}});
-const world=$('world');world.addEventListener('pointerdown',e=>{if(!entered||isModal())return;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:0};if(!locked)world.setPointerCapture(e.pointerId);});world.addEventListener('pointermove',e=>{if(!entered||isModal())return;if(locked){cancelTour();yaw-=e.movementX*.0022;pitch=Math.max(-.65,Math.min(.7,pitch-e.movementY*.0022));}else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);if(drag.moved>4){cancelTour();yaw-=dx*.004;pitch=Math.max(-.65,Math.min(.7,pitch-dy*.004));}drag.x=e.clientX;drag.y=e.clientY;}});world.addEventListener('pointerup',e=>{if(drag&&drag.moved<6&&ready){const ray=new THREE.Raycaster();ray.setFromCamera(new THREE.Vector2((e.clientX/innerWidth)*2-1,1-(e.clientY/innerHeight)*2),camera);const hits=ray.intersectObjects(bottles);if(hits[0]){if(hits[0].object.userData.action==='screen')toggleFilm();else openPiece(hits[0].object.userData.piece);}}drag=null;});world.addEventListener('pointercancel',()=>drag=null);
+const world=$('world');world.addEventListener('pointerdown',e=>{if(!entered||isModal())return;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:0};if(!locked)world.setPointerCapture(e.pointerId);});world.addEventListener('pointermove',e=>{if(!entered||isModal())return;if(locked){cancelTour();yaw-=e.movementX*.0022;pitch=Math.max(-.65,Math.min(.7,pitch-e.movementY*.0022));}else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);if(drag.moved>4){cancelTour();yaw-=dx*.004;pitch=Math.max(-.65,Math.min(.7,pitch-dy*.004));}drag.x=e.clientX;drag.y=e.clientY;}});world.addEventListener('pointerup',e=>{if(drag&&drag.moved<6&&ready){const ray=new THREE.Raycaster();ray.setFromCamera(locked?new THREE.Vector2(0,0):new THREE.Vector2((e.clientX/innerWidth)*2-1,1-(e.clientY/innerHeight)*2),camera);const hits=ray.intersectObjects(bottles);if(hits[0]){if(hits[0].object.userData.action==='dedication')readDedication();else if(hits[0].object.userData.action==='screen')toggleFilm();else openPiece(hits[0].object.userData.piece);}}drag=null;});world.addEventListener('pointercancel',()=>drag=null);
 document.querySelectorAll('[data-move]').forEach(b=>{const k={forward:'w',back:'s',left:'a',right:'d'}[b.dataset.move];b.onpointerdown=e=>{e.preventDefault();keys.add(k);cancelTour();b.setPointerCapture(e.pointerId);};b.onpointerup=b.onpointercancel=()=>keys.delete(k);b.onlostpointercapture=()=>keys.delete(k);});
 function allowed(x,z){if(x< -8.9||x>8.9||z< -16.6||z>16.9)return false;return !casona?.obstacles.some(([l,r,a,b])=>x>l-.25&&x<r+.25&&z>a-.25&&z<b+.25);}
 
 function move(dt){let f=(keys.has('w')||keys.has('arrowup')?1:0)-(keys.has('s')||keys.has('arrowdown')?1:0),s=(keys.has('d')?1:0)-(keys.has('a')?1:0);if(keys.has('arrowleft'))yaw+=dt*1.3;if(keys.has('arrowright'))yaw-=dt*1.3;if(!f&&!s)return;const norm=Math.hypot(f,s);f/=norm;s/=norm;const speed=(keys.has('shift')?4.8:2.8)*dt,dx=(-Math.sin(yaw)*f+Math.cos(yaw)*s)*speed,dz=(-Math.cos(yaw)*f-Math.sin(yaw)*s)*speed;const x=camera.position.x,z=camera.position.z;if(allowed(x+dx,z))camera.position.x+=dx;if(allowed(camera.position.x,z+dz))camera.position.z+=dz;}
 const map=$('map').getContext('2d');function mapDraw(){map.clearRect(0,0,140,190);const xx=x=>70+x*4.8,zz=z=>15+(z+18)*4.5;map.strokeStyle='#a99b7966';map.strokeRect(16,9,108,172);map.fillStyle='#b3966044';for(const [l,r,a,b] of casona.obstacles)map.fillRect(xx(l),zz(a),(r-l)*4.8,(b-a)*4.5);pieces.forEach((p,i)=>{map.fillStyle=seen.has(p.id)?'#dcc096':'#83917d';map.fillRect(xx(p.x)-3,zz(p.z)-3,6,6);});map.save();map.translate(xx(camera.position.x),zz(camera.position.z));map.rotate(-yaw);map.fillStyle='#f5efde';map.beginPath();map.moveTo(0,-6);map.lineTo(4.5,5);map.lineTo(0,3);map.lineTo(-4.5,5);map.closePath();map.fill();map.restore();}
 
-const projection=new THREE.Vector3();function updateMarkers(){markers.forEach((m,i)=>{const p=pieces[i];projection.copy(casona.markerPoints[i]);projection.y=2.24;projection.x=-9.50;projection.project(camera);const visible=entered&&!isModal()&&projection.z<1&&projection.z>0&&Math.abs(projection.x)<.95&&Math.abs(projection.y)<.8;m.hidden=!visible;if(visible){m.style.left=`${(projection.x*.5+.5)*innerWidth}px`;m.style.top=`${(-projection.y*.5+.5)*innerHeight}px`;m.classList.toggle('selected',i===(guided?selected:nearest));}});}
+const projection=new THREE.Vector3();function updateMarkers(){plaque.update(camera,entered&&!isModal()&&!locked);markers.forEach((m,i)=>{const p=pieces[i];projection.copy(casona.markerPoints[i]);projection.y=2.24;projection.x=-9.50;projection.project(camera);const visible=entered&&!isModal()&&projection.z<1&&projection.z>0&&Math.abs(projection.x)<.95&&Math.abs(projection.y)<.8;m.hidden=!visible;if(visible){m.style.left=`${(projection.x*.5+.5)*innerWidth}px`;m.style.top=`${(-projection.y*.5+.5)*innerHeight}px`;m.classList.toggle('selected',i===(guided?selected:nearest));}});}
 function animate(){requestAnimationFrame(animate);if(document.hidden)return;if(!entered){clock.getDelta();return;}const dt=Math.min(clock.getDelta(),.04);if(entered&&!isModal()){if(tween){tween.t+=dt;const a=tween.duration?Math.min(tween.t/tween.duration,1):1,e=a*a*(3-2*a);let distance=e*tween.total;for(let k=1;k<tween.path.length;k++){const length=tween.path[k-1].distanceTo(tween.path[k]);if(distance<=length||k===tween.path.length-1){camera.position.lerpVectors(tween.path[k-1],tween.path[k],length?Math.min(distance/length,1):1);break;}distance-=length;}yaw=THREE.MathUtils.lerp(tween.yaw0,tween.yaw1,e);pitch=THREE.MathUtils.lerp(tween.pitch0,tween.pitch1,e);if(a===1)tween=null;}else move(dt);if(!guided){let best=-1,dist=4.5;pieces.forEach((p,i)=>{const d=Math.hypot(camera.position.x-p.x,camera.position.z-p.z);if(d<dist){best=i;dist=d;}});if(best!==nearest){nearest=best;hint(best);}}}camera.rotation.set(pitch,yaw,0,'YXZ');renderer.render(scene,camera);if(frames++%2===0){updateMarkers();if(entered)mapDraw();}}
 window.addEventListener('resize',()=>{if(!ready)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
 try{build();}catch(e){console.error('No se pudo iniciar la sala 3D:',e);$('fallback').hidden=false;$('enter').textContent='Ver la colección';$('enter').disabled=false;$('enter').onclick=()=>showDialog('collection-dialog');$('world').style.background='linear-gradient(#0b2c2566,#0b2c2566),url(assets/portada.jpg) center/cover';}
@@ -189,3 +190,37 @@ showHero();
 function locateAtlas(r){enter();document.exitPointerLock?.();keys.clear();tween=null;guided=true;selected=nearest=-1;hint(-1);camera.position.set(6.2,2.05,innerWidth/innerHeight<.68?1.43:.72);yaw=0;pitch=Math.atan2(1.83-camera.position.y,camera.position.z+3);$('tour-caption').textContent='Vitrina de consulta · '+r.name;$('tour').textContent='Salir de la visita guiada';}
 const query=new URLSearchParams(location.search),station=query.get('estacion'),zones={muros:'walls',barra:'bar',comedor:'dining',lounge:'lounge',pantalla:'screen'};if(query.has('exhibir')){if(ready)enter();import('./visita-atlas.js').then(m=>m.abrirVitrina({THREE,scene,ready,id:query.get('exhibir'),locate:locateAtlas,addObstacle:b=>casona.obstacles.push(b)}));}else if(station!==null&&/^[0-5]$/.test(station)){const index=pieces.findIndex(p=>p.station===Number(station));
 if(index<0){if(ready)enter();toast('Esta estación no está disponible.');}else if(ready)goTo(index);else openPiece(index);}else if(ready&&zones[query.get('zona')])visitZone(zones[query.get('zona')]);else if(ready&&query.has('entrar'))enter();
+
+function readDedication() {
+  if (!$('dedication-dialog').open) showDialog('dedication-dialog');
+}
+$('plaque-read').onclick = readDedication;
+const publicPortal = 'https://fernandogarduno-arch.github.io/madrecita-archivo-vivo/';
+function sharePortal(dedication) {
+  $('share-title').textContent = dedication ? 'Compartir dedicatoria' : 'Compartir portal';
+  $('share-url').value = publicPortal + (dedication ? '?entrar=1#dedicatoria' : '');
+  $('share-feedback').textContent = '';
+  showDialog('share-dialog');
+}
+$('share-portal').onclick = () => sharePortal(false);
+$('share-dedication').onclick = () => sharePortal(true);
+$('copy-url').onclick = async () => {
+  const field = $('share-url');
+  try {
+    await navigator.clipboard.writeText(field.value);
+    $('share-feedback').textContent = 'Enlace copiado.';
+  } catch {
+    field.focus(); field.select();
+    $('share-feedback').textContent = 'Selecciona Copiar para compartir el enlace.';
+  }
+};
+function visitDedicationLink() {
+  if (location.hash !== '#dedicatoria') return;
+  if (ready) { enter(); reset(); }
+  readDedication();
+}
+$('dedication-dialog').addEventListener('close', () => {
+  if (location.hash === '#dedicatoria') history.replaceState(history.state,'',location.pathname+location.search);
+});
+addEventListener('hashchange',visitDedicationLink);
+visitDedicationLink();
