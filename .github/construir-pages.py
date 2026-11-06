@@ -25,6 +25,15 @@ for src in repo.rglob('*'):
     out.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, out)
 
+# Los QR impresos antes del cambio de dominio conservan su destino y sus parámetros.
+entry = dest / 'index.html'
+redirect = """<script>
+if (new URLSearchParams(location.search).has('entrar')) {
+  location.replace('https://madrecita.gamasis.app/' + location.search + location.hash);
+}
+</script>"""
+entry.write_text(entry.read_text(encoding='utf8').replace('<head>', '<head>' + redirect, 1), encoding='utf8')
+
 base = f'https://raw.githubusercontent.com/{owner_repo}/{revision}/archivo/datos/'
 module = f"export const photoDirectory = {json.dumps(base)};\n"
 (dest/'archivo/medios.js').write_text(module, encoding='utf8')
