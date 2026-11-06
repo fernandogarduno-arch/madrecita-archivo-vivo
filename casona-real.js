@@ -1,3 +1,4 @@
+import {mountReserva} from './reserva-retana.js';
 import {createStoneWalls} from './muros-casona.js';
 import {createStoneFloor,createBarStone} from './piedra-natural.js';
 import {createPhotoWall} from './muro-fotografico.js';
@@ -77,6 +78,7 @@ export function createCasona(scene,renderer,video,compact){
  cyl(.016,.016,3.4,black,x,5.42,14.55);const hood=cyl(.16,.42,.4,copper,x,3.55,14.55);mesh(new T.CircleGeometry(.33,24),amber,x,3.33,14.55).rotation.x=-Math.PI/2;}
  for(const x of [-5.25,-4.93,-4.61]){cyl(.055,.07,.016,copper,x,1.67,14.5);cyl(.014,.014,.085,metal,x,1.71,14.5);cyl(.080,.036,.12,mat('#d7d2ad',.22,.37),x,1.80,14.5);}
  // Trasbarra interpretativa: paño de madera, sello verificado y franja de luz baja.
+ mountReserva(scene,selectables,wood);
  const panel=new T.MeshStandardMaterial({map:woodTexture,color:'#39443c',roughness:.80});
  box(11.3,4.5,.16,panel,-3.35,3,17.75);box(11.35,.055,.17,copper,-3.35,5.25,17.64);
  box(11.35,.055,.17,copper,-3.35,.76,17.64);

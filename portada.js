@@ -32,9 +32,9 @@
       const link = document.createElement('a');
       link.href = 'botella/';
       link.style.color = 'inherit';
-      link.textContent = 'Ver el diseño de la botella ↗';
+      link.textContent = 'Descubrir Reserva Retana ↗';
       document.querySelector('.intro .lead').replaceChildren(
-        'Madrecita · La botella de Casa Retana.', document.createElement('br'), link
+        'Reserva Retana · La botella de la casa.', document.createElement('br'), link
       );
     }
     const picture = document.createElement('picture');
