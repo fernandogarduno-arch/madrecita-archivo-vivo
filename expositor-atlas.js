@@ -1,3 +1,5 @@
+// Madrecita · catálogo administrado.
+import { resolvePublicPhoto } from './archivo/foto-publica.js';
 // Una fotografía o una cédula documental en un atril tridimensional.
 // baseURL apunta al directorio que contiene las rutas `photos[].src` del catálogo.
 function wrapText(context, value, width) {
@@ -27,18 +29,17 @@ function makePanel(THREE, width, height, draw) {
   return new THREE.MeshBasicMaterial({map: texture, toneMapped: false});
 }
 
-async function documentaryPhoto(record, baseURL) {
-  const directory = new URL(baseURL, document.baseURI);
-  if (!directory.pathname.endsWith('/')) directory.pathname += '/';
+async function documentaryPhoto(record) {
   const references = Array.isArray(record.photos) ? record.photos : [];
   for (const reference of references) {
     if (typeof reference.src !== 'string' || !reference.src) continue;
-    const url = new URL(reference.src, directory);
-    if (url.origin !== directory.origin || !url.pathname.startsWith(directory.pathname)) continue;
+    const url = resolvePublicPhoto(reference);
+    if (!url) continue;
     try {
       const image = new Image();
       image.decoding = 'async';
-      image.src = url.href;
+      image.crossOrigin = 'anonymous';
+      image.src = url;
       await image.decode();
       return {image, reference, status: 'available'};
     } catch {
@@ -48,8 +49,8 @@ async function documentaryPhoto(record, baseURL) {
   return {image: null, reference: null, status: references.length ? 'error' : 'missing'};
 }
 
-export async function exhibirPieza({THREE, scene, record, baseURL}) {
-  const photo = await documentaryPhoto(record, baseURL);
+export async function exhibirPieza({THREE, scene, record}) {
+  const photo = await documentaryPhoto(record);
   const group = new THREE.Group();
   group.position.set(6.2, 0, -3);
   group.name = 'Vitrina del atlas · ' + record.id;

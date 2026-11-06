@@ -1,0 +1,1 @@
+export const API_BASE = 'https://madrecita-coleccion-api-retana.gamasis.chatgpt.site';

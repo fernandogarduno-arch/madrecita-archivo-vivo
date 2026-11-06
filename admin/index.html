@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es-MX">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#142e25">
+  <title>Administración de la colección · Madrecita</title>
+  <link rel="icon" href="../assets/retana-app.svg">
+  <link rel="stylesheet" href="./admin.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <a class="brand" href="../"><img src="../assets/retana-agave-claro.svg" alt=""><span>Madrecita</span></a>
+      <div class="top-actions"><a href="../archivo/">Ver La Cava ↗</a><button id="logout" class="quiet" type="button" hidden>Cerrar sesión</button></div>
+    </div>
+  </header>
+  <main class="container">
+    <section id="login-panel" class="login-card" aria-labelledby="login-title">
+      <div class="login-intro">
+        <p class="eyebrow">Colección Retana</p>
+        <h1 id="login-title">Administrar<br>la colección.</h1>
+        <p>Accede para registrar botellas, documentar su procedencia y elegir cuáles se exhiben.</p>
+        <form id="login-form">
+          <label for="password">Contraseña</label>
+          <div class="password-field"><input id="password" name="password" type="password" required autocomplete="current-password"><button id="reveal-password" type="button" aria-label="Mostrar contraseña" aria-pressed="false">Mostrar</button></div>
+          <button class="primary" type="submit" id="login-submit">Entrar a administración</button>
+          <p id="login-status" class="message" role="status"></p>
+        </form>
+      </div>
+      <div class="login-image" aria-hidden="true"></div>
+    </section>
+
+    <section id="collection" aria-labelledby="collection-title" hidden>
+      <div class="page-heading">
+        <div><p class="eyebrow">Administración</p><h1 id="collection-title">La colección.</h1><p id="summary" class="muted"></p></div>
+        <button id="add-bottle" class="primary" type="button">+ Registrar botella</button>
+      </div>
+      <div class="toolbar">
+        <div class="search-field"><label for="search">Buscar en el inventario</label><input id="search" type="search" placeholder="Folio, marca, botella, región o productor" autocomplete="off"></div>
+        <label class="field-filter">Región<select id="list-region"><option value="">Todas las regiones</option></select></label>
+        <label class="field-filter">Adquisición<select id="list-acquisition"><option value="">Todas las formas</option></select></label>
+        <div class="status-filter" role="group" aria-label="Estado de exhibición">
+          <button type="button" data-filter="all" aria-pressed="true">Todas</button><button type="button" data-filter="active" aria-pressed="false">En exhibición</button><button type="button" data-filter="inactive" aria-pressed="false">Inactivas</button>
+        </div>
+      </div>
+      <div class="list-heading"><h2>Inventario</h2><span id="count" role="status"></span></div>
+      <p id="main-status" class="message" role="status"></p>
+      <div id="bottles" class="inventory"></div>
+      <div class="pagination"><button type="button" id="previous" class="secondary">← Anterior</button><span id="page"></span><button type="button" id="next" class="secondary">Siguiente →</button></div>
+    </section>
+  </main>
+
+  <dialog id="editor" aria-labelledby="editor-title">
+    <div class="editor-top"><div><p id="folio" class="eyebrow"></p><h2 id="editor-title">Ficha de botella</h2></div><button id="close-editor" class="close" type="button" aria-label="Cerrar ficha">×</button></div>
+    <form id="bottle-form">
+      <div class="editor-scroll">
+        <section class="section"><h3>Identidad de la pieza</h3>
+          <div class="form-grid">
+            <label>Marca<input name="brand" maxlength="160" list="brands" placeholder="Marca de la etiqueta"></label>
+            <label>Modelo o nombre <span class="required">obligatorio</span><input name="model" maxlength="200" required placeholder="Nombre que llevará el pasaporte"></label>
+            <label>Clasificación<input name="category" list="categories" maxlength="120" placeholder="Por ejemplo, reposado"></label>
+            <label>Productor o destilería<input name="producer" maxlength="300" placeholder="Tal como aparece en la etiqueta"></label>
+          </div>
+          <datalist id="brands"></datalist><datalist id="categories"></datalist>
+        </section>
+        <section class="section"><h3>Origen geográfico</h3>
+          <div class="form-grid">
+            <label>Localidad<input name="place" maxlength="160" placeholder="Municipio o localidad"></label>
+            <label>Región de Jalisco<select name="region" id="region"></select></label>
+            <label class="full">Origen consignado<input name="origin" maxlength="250" placeholder="Estado, país u origen documentado"></label>
+          </div>
+        </section>
+        <section class="section"><h3>Fotografía</h3>
+          <div class="photo-area"><div id="photo-preview" class="preview"></div><div><label for="file">Fotografía opcional</label><input type="file" id="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG o WebP. También puedes guardar la ficha sin foto.</small><button id="undo-photo" class="inline-link" type="button" hidden>Descartar foto nueva</button><p class="message" id="photo-status" role="status"></p></div></div>
+        </section>
+        <section class="section private-section"><h3>Procedencia y adquisición</h3><p class="section-note">Estos datos se consultan únicamente en administración.</p>
+          <div class="form-grid">
+            <label>Cómo llegó a la colección<select name="acquisition"><option value="desconocido">Por documentar</option><option value="compra">Compra</option><option value="regalo">Regalo</option><option value="herencia">Herencia</option><option value="intercambio">Intercambio</option><option value="otro">Otro</option></select></label>
+            <label>Fecha de adquisición<input name="acquiredOn" type="date"></label>
+            <label class="full">Procedencia privada<input name="source" maxlength="400" placeholder="Donante, vendedor o referencia de procedencia"></label>
+            <label class="full">Notas privadas<textarea name="notes" maxlength="2000" rows="3"></textarea></label>
+          </div>
+        </section>
+        <section class="section">
+          <div id="new-state"><label class="inline-check"><input name="active" type="checkbox"> Exhibir esta botella en el museo</label></div>
+          <div id="existing-state" hidden><h3>Estado de exhibición</h3><div class="state-controls"><span id="current-state"></span><button id="change-state" class="secondary" type="button"></button></div><p class="section-note">Las piezas inactivas se conservan en el inventario y pueden volver a exhibirse.</p></div>
+        </section>
+        <section id="history-section" class="section" hidden>
+          <button id="view-history" class="secondary" type="button" aria-expanded="false" aria-controls="history">Ver historial</button>
+          <div id="history" hidden></div>
+        </section>
+      </div>
+      <div class="editor-bottom"><div><p id="edit-status" role="status" class="message"></p><button id="refresh-record" type="button" class="inline-link" hidden>Cargar la versión actual</button></div><button id="save" class="primary" type="submit">Guardar ficha</button></div>
+    </form>
+  </dialog>
+  <dialog id="confirm-state" aria-labelledby="confirm-title"><div class="confirm-body"><h2 id="confirm-title"></h2><p id="confirm-description"></p><div class="confirm-actions"><button id="cancel-state" class="secondary" type="button">Cancelar</button><button id="accept-state" class="primary" type="button">Confirmar</button></div></div></dialog>
+  <script type="module" src="./admin.js"></script>
+</body>
+</html>
