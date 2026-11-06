@@ -99,10 +99,6 @@ function retryWelcome(event) {
   if (!waitingForGesture || !event.isTrusted || !entered || isModal()) return;
   if (event.target.closest?.('#sound, #screen-toggle, #trailer-open, #home, dialog')) return;
   void playWelcome();
-  if (!cabinetStarted && !new URLSearchParams(location.search).has('exhibir')) {
-    cabinetStarted = true;
-    import('./especiales/montaje-3d.js').then(m => m.mountCabinet(THREE,scene,casona,bottles)).catch(err => console.warn('Gabinete no disponible',err));
-  }
 }
 document.addEventListener('click', retryWelcome);
 document.addEventListener('keydown', retryWelcome);
@@ -173,6 +169,13 @@ function enter() {
   $('hud').hidden = false;
   $('markers').hidden = false;
   void playWelcome();
+  if (!cabinetStarted && !new URLSearchParams(location.search).has('exhibir')) {
+    cabinetStarted = true;
+    import('./especiales/montaje-3d.js').then(m => m.mountCabinet(THREE,scene,casona,bottles)).catch(err => {
+      cabinetStarted = false;
+      console.warn('Gabinete no disponible',err);
+    });
+  }
 }
 function reset(){if(!ready)return;document.exitPointerLock?.();keys.clear();tween=null;guided=false;selected=-1;nearest=-1;[yaw,pitch]=entranceView(camera);$('piece-hint').hidden=true;$('tour-caption').textContent='Explora a tu ritmo.';$('tour').textContent='Recorrido guiado';}
 $('home').onclick=e=>{e.preventDefault();reset();entered=false;$('welcome').hidden=false;$('hud').hidden=true;$('markers').hidden=true;showHero();};$('reset').onclick=reset;$('enter').onclick=()=>{enter();$('tour-caption').textContent=innerWidth<750?'Desliza para mirar · Flechas para caminar':'Arrastra para mirar · W A S D para caminar';};$('guided').onclick=()=>{enter();goTo(0);};$('curator-tour').onclick=()=>{$('curator-dialog').close();if(ready){enter();goTo(0);}else showDialog('collection-dialog');};$('tour').onclick=()=>{if(guided){guided=false;tween=null;$('tour').textContent='Recorrido guiado';$('tour-caption').textContent='Explora a tu ritmo.';}else goTo(selected<0?0:selected);};
