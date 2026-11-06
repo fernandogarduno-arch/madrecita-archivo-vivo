@@ -1,11 +1,12 @@
 (() => {
-  const scenes = ['galeria', 'estantes', 'mesa', 'agaves'];
+  const scenes = ['galeria', 'estantes', 'mesa', 'agaves', 'casa-retana'];
   const key = 'madrecita.portada.anterior';
   const background = document.getElementById('hero-background');
   const toggle = document.getElementById('motion-toggle');
   const preference = matchMedia('(prefers-reduced-motion: reduce)');
 
   function selectScene() {
+    if (new URLSearchParams(location.search).get('portada') === 'casa-retana') return 'casa-retana';
     let index = Math.floor(Math.random() * scenes.length);
     try {
       const previous = scenes.indexOf(localStorage.getItem(key));
@@ -26,6 +27,16 @@
   function showCover() {
     if (background.firstElementChild) return;
     const scene = selectScene();
+    background.dataset.scene = scene;
+    if (scene === 'casa-retana') {
+      const link = document.createElement('a');
+      link.href = 'botella/';
+      link.style.color = 'inherit';
+      link.textContent = 'Ver el diseño de la botella ↗';
+      document.querySelector('.intro .lead').replaceChildren(
+        'Madrecita · La botella de Casa Retana.', document.createElement('br'), link
+      );
+    }
     const picture = document.createElement('picture');
     const portrait = document.createElement('source');
     portrait.media = '(orientation: portrait)';
