@@ -14,5 +14,12 @@
     <section class="list"><h2>Índice del gabinete</h2><label>Mostrar <select id="group"><option value="">Todas las distinciones</option></select></label><p id="result" role="status">Consultando las fichas activas…</p><div id="entries"></div></section>
   </main>
   <footer class="territory-footer"><a href="../archivo/#mesa">La Mesa ↗</a><a href="../tierra/">La tierra de la casa ↗</a></footer>
+  <dialog id="estudio" aria-labelledby="estudio-nombre">
+    <div class="estudio-top"><span class="territory-kicker">Colección Retana · Estudio de la pieza</span><button id="estudio-cerrar" aria-label="Cerrar estudio">×</button></div>
+    <div id="estudio-escena"></div>
+    <div class="estudio-info"><p id="estudio-folio"></p><h2 id="estudio-nombre"></h2><p id="estudio-origen"></p><p role="status" id="estudio-estado"></p>
+    <div id="estudio-controles" hidden><button id="estudio-izquierda" aria-label="Girar a la izquierda">↶</button><button id="estudio-derecha" aria-label="Girar a la derecha">↷</button><button id="estudio-girar" aria-pressed="false">Giro automático</button><button id="estudio-frente">Frente</button><button id="estudio-alejar" aria-label="Alejar">−</button><button id="estudio-acercar" aria-label="Acercar">+</button></div>
+    <div class="estudio-links"><a id="estudio-pasaporte">Abrir pasaporte</a><a id="estudio-foto">Ver fotografía frontal</a></div></div>
+  </dialog>
   <script type="module" src="gabinete.js"></script>
 </body></html>

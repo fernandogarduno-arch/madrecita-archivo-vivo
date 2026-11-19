@@ -33,7 +33,7 @@ p { line-height: 1.55; }
 .login-card { display: grid; grid-template-columns: minmax(320px, 1fr) 1fr; overflow: hidden; border-radius: 10px; border: 1px solid var(--border); background: #fbf9f2; min-height: 520px; }
 .login-intro { align-self: center; max-width: 560px; padding: clamp(22px, 5vw, 65px); }
 .login-intro>p:not(.eyebrow), .muted, small, .section-note { color: var(--muted); }
-.login-image { background: linear-gradient(145deg,#0c201824,transparent 50%,#14281a5e), url("../archivo/sala/6.jpeg") 50% 43% / cover; }
+.login-image { background: linear-gradient(145deg,#0c201824,transparent 50%,#14281a5e), url("../assets/detalles/vidrio.webp") 50% 43% / cover; }
 .login-intro form { margin-top: 25px; }
 label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; font-weight: 600; color: #364e3f; }
 .password-field { display: flex; align-items: stretch; margin: 6px 0 15px; }
@@ -124,3 +124,4 @@ label:has(.required) input { display:block; margin-top:6px; }
 .thumb, .preview { position:relative }
 .thumb small:not([hidden]), .preview small:not([hidden]) { position:absolute; bottom:0; max-width:100%; background:#1b352f; color:#f5ecdc; padding:1px 3px; font:9px/1.2 system-ui,sans-serif }
 .thumb small[hidden], .preview small[hidden] { display:none }
+#photo-preview[data-finish=black]{background:radial-gradient(ellipse,#363a37,#111)}#photo-preview[data-finish=white]{background:#fff}#photo-preview img{object-fit:contain;filter:drop-shadow(0 3px 4px #0003)}#nom-status{color:#425649}#memorias{margin:3rem 0;padding:clamp(1rem,3vw,2.5rem);background:#faf8f1;border-top:2px solid #826e48;scroll-margin-top:4rem}#visit-history article{border-top:1px solid #c9c5b9;margin-top:1rem}#visit-history p{white-space:pre-wrap}#visit-selection:empty{display:none}#memorias form{max-width:760px}

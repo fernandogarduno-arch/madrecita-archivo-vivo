@@ -23,9 +23,10 @@ function publicRecord(id, original, change) {
   };
   const photos = [...(record.photos || [])];
   if (change.photo) photos.unshift({ src: change.photo, source: 'Administración de la colección', adminPhoto: true });
-  const name = clean(change.model) || clean(change.brand) || original?.name || id;
+  const name = [clean(change.brand),clean(change.model)].filter((v,i,a)=>v && a.indexOf(v)===i).join(' · ') || original?.name || id;
   return {
-    ...record, id, name, brand: clean(change.brand), model: clean(change.model),
+    ...record, ...Object.fromEntries(['nom','agave','volume','comments','photoFinish','geoSource'].filter(k=>typeof change[k]==='string').map(k=>[k,change[k]])),
+    nomSource:typeof change.nom==='string' && change.nom!==record.nom ? change.nom : record.nomSource, id, name, brand: clean(change.brand), model: clean(change.model),
     category: clean(change.category), producer: clean(change.producer), origin: clean(change.origin),
     photos, photoStatus: change.photo ? 'Foto vinculada por administración' : record.photoStatus,
     adminEdition: true
@@ -114,7 +115,7 @@ export function mergeCollection({ catalog, locations, producers, geography, chan
   const places = Array.from(placeGroups.values()).sort((a,b) => b.ids.length-a.ids.length || a.label.localeCompare(b.label,'es'));
   const makerIndex = Array.from(makerGroups.values()).sort(humanSort);
   return {
-    catalog: { ...catalog, records, featured, stats: { ...catalog.stats, records: records.length } },
+    catalog: { ...catalog, records, featured, stats: { ...catalog.stats, records: records.length, total:knownIds.size } },
     locations: { places, unplaced }, producers: { producers: makerIndex },
     geography: { ...geography, regions: geography.regions.map(region => ({
       ...region, places: Array.from(regionPlaces.get(region.slug))

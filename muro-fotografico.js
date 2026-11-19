@@ -2,7 +2,7 @@
 // Cada región se proyecta con una homografía sobre una superficie de profundidad relativa.
 // El orden de las regiones y las dimensiones del muro son una composición interpretativa.
 
-const PHOTO_SIZE = { width: 960, height: 1280 };
+
 const BAY_COUNT = 10;
 const WALL_LENGTH = 34;
 const BAY_WIDTH = WALL_LENGTH / BAY_COUNT;
@@ -55,22 +55,6 @@ const BAYS = [
   ['1e','6f','6e','6d','6c','6b','6a'],
 ];
 
-function homography(corners) {
-  const [[x0,y0],[x1,y1],[x2,y2],[x3,y3]] = corners;
-  const ax = x1-x2, bx = x3-x2, cx = x0-x1+x2-x3;
-  const ay = y1-y2, by = y3-y2, cy = y0-y1+y2-y3;
-  const determinant = ax*by-bx*ay;
-  const g = (cx*by-bx*cy)/determinant;
-  const h = (ax*cy-cx*ay)/determinant;
-  return (u,v) => {
-    const w = 1+g*u+h*v;
-    return [
-      (x0+(x1-x0+g*x1)*u+(x3-x0+h*x3)*v)/w/PHOTO_SIZE.width,
-      1-(y0+(y1-y0+g*y1)*u+(y3-y0+h*y3)*v)/w/PHOTO_SIZE.height,
-    ];
-  };
-}
-
 function estimatedAspect(corners) {
   // El rectángulo de la foto está en perspectiva. Recuperamos la relación aproximada de sus
   // ejes con una focal de trabajo en píxeles, suficiente para preservar la esbeltez de los envases.
@@ -83,7 +67,7 @@ function estimatedAspect(corners) {
 
 function addPhotoRegion(batch, key, row, leftZ, width, uSpan) {
   const columns = 16, subdivisions = 8;
-  const uvAt = homography(REGIONS[key].slice(1));
+
   const start = batch.positions.length/3;
   const bottom = LEVELS[row]+.045, top = LEVELS[row+1]-.045;
   for (let j=0;j<=subdivisions;j++) {
@@ -94,7 +78,7 @@ function addPhotoRegion(batch, key, row, leftZ, width, uSpan) {
     for (let i=0;i<=columns;i++) {
       const u = i/columns;
       batch.positions.push(x, top-(top-bottom)*v, leftZ-width*u);
-      batch.uvs.push(...uvAt((1-uSpan)*.5+u*uSpan,v));
+      batch.uvs.push((1-uSpan)*.5+u*uSpan,1-v);
       if (i<columns && j<subdivisions) {
         const a = start+j*(columns+1)+i, c = a+columns+1;
         batch.indices.push(a,c,a+1,a+1,c,c+1);
@@ -131,7 +115,7 @@ function addPhotographicInterior(T, group, renderer) {
     const mesh = new T.Mesh(geometry,material);
     mesh.name = `Celdas fotográficas · ${source}.jpeg`;
     group.add(mesh);
-    const url = new URL(`./assets/muro/foto-${source}.jpeg`,import.meta.url).href;
+    const url = new URL(source%2 ? "./assets/detalles/vidrio.webp":"./assets/detalles/ceramica.webp",import.meta.url).href;
     ready.push(loader.loadAsync(url).then(texture => {
       texture.colorSpace = T.SRGBColorSpace;
       texture.anisotropy = Math.min(8,renderer.capabilities.getMaxAnisotropy());

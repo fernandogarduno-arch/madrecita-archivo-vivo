@@ -1,12 +1,13 @@
 import {loadPublicCollection} from '../archivo/coleccion-viva.js';
-import {exhibition, settings} from '../archivo/curaduria.js';
+import {modelCatalog,showroomSelection} from './catalogo-modelos.js';
+import {settings} from '../archivo/curaduria.js';
 import {exhibirPieza} from '../expositor-atlas.js';
 
 export async function mountCabinet(THREE, scene, casona, targets) {
-  const {catalog} = await loadPublicCollection();
-  for (const {key,record} of exhibition(catalog.records)) {
+  const [{catalog},models] = await Promise.all([loadPublicCollection(),modelCatalog().catch(()=>({}))]);
+  for (const {key,record} of showroomSelection(catalog.records,models)) {
     const item = await exhibirPieza({THREE,scene,record,montaje:key});
-    item.face.userData.action = 'gabinete';
+    item.face.userData.action = item.model ? 'modelo' : 'gabinete';
     casona.selectables.push(item.face);
     targets.push(item.face);
     if (key !== 'mesa') {

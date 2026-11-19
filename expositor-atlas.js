@@ -1,6 +1,7 @@
 // Madrecita · catálogo administrado.
 import { resolvePublicPhoto, housePhoto } from './archivo/foto-publica.js';
-import {studyFor, settingFor} from './archivo/curaduria.js';
+import {modelCatalog,modelFor,modelCaption} from './especiales/catalogo-modelos.js';
+import {studyFor, settingFor,distinction} from './archivo/curaduria.js';
 // Una fotografía o una cédula documental en un atril tridimensional.
 // baseURL apunta al directorio que contiene las rutas `photos[].src` del catálogo.
 function wrapText(context, value, width) {
@@ -68,7 +69,14 @@ async function documentaryPhoto(record) {
 }
 
 export async function exhibirPieza({THREE, scene, record, montaje}) {
-  const photo = await documentaryPhoto(record);
+  let item=null,bottle=null;
+  if(distinction(record)){
+    try {
+      item=modelFor(record,await modelCatalog());
+      if(item){const {makeBottle}=await import('./especiales/botella-3d.js');bottle=await makeBottle(item);}
+    } catch { /* La cédula documental sigue disponible si el modelo no carga. */ }
+  }
+  const photo=bottle?{status:'available',reference:null}:await documentaryPhoto(record);
   const group = new THREE.Group();
   const setting = settingFor(montaje);
   group.position.set(...setting.position);
@@ -111,6 +119,16 @@ export async function exhibirPieza({THREE, scene, record, montaje}) {
   box(lacquer, 1.74, .85, .84, 0, .59, 0);
   box(basalt, 2.09, .115, 1.01, 0, 1.075, 0);
   box(light, 1.92, .013, .018, 0, 1.025, .482);
+  let face;
+  if(bottle) {
+    const foot=new THREE.Mesh(new THREE.CylinderGeometry(.61,.65,.075,64),basalt);
+    foot.position.y=1.17;group.add(foot);
+    const rim=new THREE.Mesh(new THREE.CylinderGeometry(.615,.615,.012,64),brass);
+    rim.position.y=1.147;group.add(rim);
+    materials.add(foot.material);materials.add(rim.material);
+    face=bottle.mesh;face.scale.setScalar(1.93);face.position.y=1.208;group.add(face);
+    group.userData.modelCaption=modelCaption(item);
+  } else {
   for (const x of [-.79, .79]) {
     box(brass, .057, 2.26, .057, x, 2.24, -.10);
   }
@@ -148,7 +166,8 @@ export async function exhibirPieza({THREE, scene, record, montaje}) {
       c.fillText(photo.status === 'missing' ? 'Fotografía pendiente de vincular' : 'Fotografía no disponible', 38, 930, 692);
     }
   });
-  const face = attach(planeGeometry, panel, [1.64, 2.15, 1], [0, 2.25, .008]);
+  face = attach(planeGeometry, panel, [1.64, 2.15, 1], [0, 2.25, .008]);
+  }
   face.userData.recordId = record.id;
 
   // La placa permanece legible con el alumbrado nocturno de la casona.
@@ -179,8 +198,12 @@ export async function exhibirPieza({THREE, scene, record, montaje}) {
     face,
     photoStatus: photo.status,
     newImage: Boolean(photo.reference?.newImage),
+    model: Boolean(bottle),
+    modelCaption:group.userData.modelCaption,
+    turn(delta){if(bottle)bottle.mesh.rotation.y+=delta;},
     dispose() {
       group.removeFromParent();
+      if(bottle){for(const child of group.children)if(child.geometry?.type==='CylinderGeometry')child.geometry.dispose();bottle.dispose();}
       boxGeometry.dispose();
       planeGeometry.dispose();
       arch?.dispose();

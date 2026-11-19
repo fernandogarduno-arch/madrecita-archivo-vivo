@@ -23,7 +23,7 @@ html[data-entry] #fallback {
   display:flex; flex-direction:column; justify-content:center; align-items:center; gap:10px;
   box-sizing:border-box; position:fixed; inset:0; z-index:11; margin:0; max-width:none; overflow:auto;
   padding:20px; color:#fff2d7; text-align:center;
-  background:linear-gradient(#142b20bb,#10221aeb),url(archivo/sala/6.jpeg) center/cover;
+  background:linear-gradient(#142b20bb,#10221aeb),url(assets/detalles/vidrio.webp) center/cover;
 }
 .light-plaque { width:min(330px,90%); padding:20px; background:#18382f; border:2px solid #bca276; outline:1px solid #bca276; outline-offset:-7px; }
 .light-plaque img { width:52px; height:63px; }

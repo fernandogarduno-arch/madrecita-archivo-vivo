@@ -35,10 +35,10 @@
     <section id="collection" aria-labelledby="collection-title" hidden>
       <div class="page-heading">
         <div><p class="eyebrow">Administración</p><h1 id="collection-title">La colección.</h1><p id="summary" class="muted"></p></div>
-        <button id="add-bottle" class="primary" type="button">+ Registrar botella</button>
+        <a class="secondary" href="#memorias">La Mesa</a><button id="add-bottle" class="primary" type="button">+ Registrar botella</button>
       </div>
       <div class="toolbar">
-        <div class="search-field"><label for="search">Buscar en el inventario</label><input id="search" type="search" placeholder="Folio, marca, botella, región o productor" autocomplete="off"></div>
+        <div class="search-field"><label for="search">Buscar en el inventario</label><input id="search" type="search" placeholder="Marca, botella, NOM o repisa" autocomplete="off"></div>
         <label class="field-filter">Región<select id="list-region"><option value="">Todas las regiones</option></select></label>
         <label class="field-filter">Adquisición<select id="list-acquisition"><option value="">Todas las formas</option></select></label>
         <div class="status-filter" role="group" aria-label="Estado de exhibición">
@@ -49,6 +49,18 @@
       <p id="main-status" class="message" role="status"></p>
       <div id="bottles" class="inventory"></div>
       <div class="pagination"><button type="button" id="previous" class="secondary">← Anterior</button><span id="page"></span><button type="button" id="next" class="secondary">Siguiente →</button></div>
+      <section id="memorias" class="section" aria-labelledby="memorias-title">
+        <p class="eyebrow">La Mesa · Cuaderno privado</p><h2 id="memorias-title">Memoria de las visitas</h2>
+        <form id="visit-form" class="form-grid">
+          <label>Fecha de la visita<input type="date" name="date" required></label>
+          <label>Quiénes compartieron la mesa<input name="guests" maxlength="240"></label>
+          <label class="full">Botella degustada<input id="visit-bottle" list="visit-bottles" placeholder="Busca por marca o folio"></label>
+          <datalist id="visit-bottles"></datalist><button type="button" class="secondary" id="visit-add">Añadir a la degustación</button>
+          <ul class="full" id="visit-selection"></ul>
+          <label class="full">Qué queremos recordar<textarea name="note" maxlength="1600" rows="3"></textarea></label>
+          <button class="primary" type="submit">Guardar visita</button>
+        </form><p id="visit-status" role="status"></p><div id="visit-history"></div>
+      </section>
     </section>
   </main>
 
@@ -58,25 +70,39 @@
       <div class="editor-scroll">
         <section class="section"><h3>Identidad de la pieza</h3>
           <div class="form-grid">
-            <label>Marca<input name="brand" maxlength="160" list="brands" placeholder="Marca de la etiqueta"></label>
-            <label>Modelo o nombre <span class="required">obligatorio</span><input name="model" maxlength="200" required placeholder="Nombre que llevará el pasaporte"></label>
-            <label>Clasificación<input name="category" list="categories" maxlength="120" placeholder="Por ejemplo, reposado"></label>
-            <label>Productor o destilería<input name="producer" maxlength="300" placeholder="Tal como aparece en la etiqueta"></label>
+            <label>Nombre de la marca<input name="brand" maxlength="140" list="brands" placeholder="Marca de la etiqueta"></label>
+            <label>Presentación o edición<input name="model" maxlength="180" placeholder="Opcional, como aparece en la etiqueta"></label>
+            <label>Clase<select name="category" id="categories"></select></label>
+            <label>NOM de la etiqueta<input name="nom" maxlength="16" inputmode="numeric" list="nom-options" placeholder="Cuatro dígitos"></label>
+            <datalist id="nom-options"></datalist><small class="full" id="nom-status" role="status"></small>
+            <label>Productor o destilería<input name="producer" list="producers" maxlength="460" placeholder="Tal como aparece en la etiqueta"></label>
           </div>
-          <datalist id="brands"></datalist><datalist id="categories"></datalist>
+          <datalist id="brands"></datalist><datalist id="producers"></datalist>
+          <div class="form-grid">
+            <label>Agave<select name="agave"><option value="">Por documentar</option><option>100 % de agave</option><option>Mixto</option></select></label>
+            <label>Volumen<input name="volume" list="volumes" maxlength="64" placeholder="750 ml"></label>
+            <datalist id="volumes"></datalist>
+            <label class="full">Comentarios del pasaporte<textarea name="comments" maxlength="1600" rows="2"></textarea></label>
+          </div>
         </section>
         <section class="section"><h3>Origen geográfico</h3>
           <div class="form-grid">
-            <label>Localidad<input name="place" maxlength="160" placeholder="Municipio o localidad"></label>
-            <label>Región de Jalisco<select name="region" id="region"></select></label>
-            <label class="full">Origen consignado<input name="origin" maxlength="250" placeholder="Estado, país u origen documentado"></label>
+            <label>Localidad<input name="place" maxlength="140" list="places" placeholder="Municipio o localidad"></label>
+            <label>Región del atlas de Jalisco<select name="region" id="region"></select><small id="region-hint" role="status"></small></label>
+            <datalist id="places"></datalist><label class="full">Origen consignado<input name="origin" maxlength="240" placeholder="Estado, país u origen documentado"></label>
           </div>
         </section>
         <section class="section"><h3>Fotografía</h3>
-          <div class="photo-area"><div id="photo-preview" class="preview"></div><div><label for="file">Fotografía opcional</label><input type="file" id="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG o WebP. También puedes guardar la ficha sin foto.</small><button id="undo-photo" class="inline-link" type="button" hidden>Descartar foto nueva</button><p class="message" id="photo-status" role="status"></p></div></div>
+          <div class="photo-area"><div id="photo-preview" class="preview"></div><div><label for="photo-finish">Acabado de la fotografía</label>
+            <select id="photo-finish"><option value="white">Estudio blanco con sombra · IA</option><option value="black">Estudio negro con luz · IA</option><option value="original">Conservar encuadre original</option></select>
+            <label for="camera">Tomar foto con el celular</label><input id="camera" type="file" accept="image/jpeg,image/png,image/webp" capture="environment">
+            <label for="file">Elegir foto de la galería</label><input type="file" id="file" accept="image/jpeg,image/png,image/webp"><small>JPG, PNG o WebP. También puedes guardar la ficha sin foto.</small><button id="undo-photo" class="inline-link" type="button" hidden>Descartar foto nueva</button><p class="message" id="photo-status" role="status"></p></div></div>
         </section>
+        <section id="family-distillery" class="section" hidden><details><summary id="family-distillery-count"></summary><ul id="family-distillery-list"></ul></details></section>
         <section class="section private-section"><h3>Procedencia y adquisición</h3><p class="section-note">Estos datos se consultan únicamente en administración.</p>
           <div class="form-grid">
+            <label>Ubicación en la repisa<input name="shelf" list="shelves" maxlength="120" placeholder="Mueble, repisa y posición"></label>
+            <datalist id="shelves"></datalist><label>Precio de compra (MXN)<input name="price" type="number" step="0.01" min="0" max="999999999999.99" placeholder="0.00"></label>
             <label>Cómo llegó a la colección<select name="acquisition"><option value="desconocido">Por documentar</option><option value="compra">Compra</option><option value="regalo">Regalo</option><option value="herencia">Herencia</option><option value="intercambio">Intercambio</option><option value="otro">Otro</option></select></label>
             <label>Fecha de adquisición<input name="acquiredOn" type="date"></label>
             <label class="full">Procedencia privada<input name="source" maxlength="400" placeholder="Donante, vendedor o referencia de procedencia"></label>
