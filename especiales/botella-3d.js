@@ -81,6 +81,24 @@ function photographicSkin(front,back,item) {
     return {s:signedPower(Math.sin(a),2/item.shape),front:Math.cos(a)>=0,cos:Math.abs(Math.cos(a))};
   });
   const bodyTint=[0,1,2].map(i=>parseInt((item.bodyColor||'#898075').slice(1+i*2,3+i*2),16));
+  // En la mitad indocumentada, conserva un pigmento por zona. Prolongar el
+  // color de cada renglón llevaría letras, dibujos y brillos alrededor del envase.
+  function zoneColor(low,high) {
+    const channels=[[],[],[]];
+    for(let row=Math.floor(front.height*(1-high));row<front.height*(1-low);row+=2) {
+      const start=row*front.width*4;
+      for(let x=1;x<front.width-1;x+=3) {
+        const pixel=start+x*4;
+        if(front.data[pixel+3]<200)continue;
+        for(let k=0;k<3;k++)channels[k].push(front.data[pixel+k]);
+      }
+    }
+    return channels.map((values,k)=>values.length?values.sort((a,b)=>a-b)[Math.floor(values.length/2)]:bodyTint[k]);
+  }
+  const widest=Math.max(...profile.map(p=>p[1]));
+  const shoulder=profile.find(([y,r])=>y>.48 && r<.62*widest)?.[0]??.76;
+  const neck=zoneColor(Math.min(shoulder+.04,.86),.90),cap=zoneColor(.94,.99);
+  const smooth=x=>{const t=clamp(x,0,1);return t*t*(3-2*t);};
   let ring=0;
   for(let row=h-1;row>=0;row--) {
     const y=1-(row+.5)/h;
@@ -97,24 +115,17 @@ function photographicSkin(front,back,item) {
       return idx;
     }
     const li=sample(front,-.84),ri=sample(front,.84);
-    const sideTint=[0,0,0];
-    // Suaviza los pigmentos del borde en el volumen estimado del reverso.
-    // Las franjas de texto de una etiqueta frontal no se extienden por detrás.
-    for(let offset=-4;offset<=4;offset++){
-      const shift=Math.round(offset*front.height*.007);
-      for (const edge of [li,ri]) {
-        const src=clamp(Math.floor(edge/(4*front.width))+shift,0,front.height-1)*front.width*4+edge%(4*front.width);
-        for(let ch=0;ch<3;ch++)sideTint[ch]+=front.data[src+ch]/18;
-      }
-    }
+    const toNeck=smooth((y-shoulder+.045)/.09),toCap=smooth((y-.90)/.04);
+    const inferred=bodyTint.map((v,k)=>(v*(1-toNeck)+neck[k]*toNeck)*(1-toCap)+cap[k]*toCap);
     for(let j=0;j<w;j++){
       const col=columns[j],photo=(!col.front && back)?back:front;
-      const k=sample(photo,col.front?col.s:-col.s),out=(row*w+j)*4;
+      const documented=col.front||Boolean(back);
+      const k=documented?sample(photo,col.front?col.s:-col.s):0,out=(row*w+j)*4;
       for(let ch=0;ch<3;ch++) {
         const edgeMix=(col.s+1)/2,edge=front.data[li+ch]*(1-edgeMix)+front.data[ri+ch]*edgeMix;
-        const mix=Math.min(1,col.cos*3.3);
-        const side=back ? edge : .62*sideTint[ch]+.25*bodyTint[ch]+.13*edge;
-        const color=col.front||back?side*(1-mix)+photo.data[k+ch]*mix:side;
+        const mix=smooth(col.cos/.45);
+        const side=back ? edge : inferred[ch];
+        const color=documented?side*(1-mix)+photo.data[k+ch]*mix:side;
         bitmap.data[out+ch]=color;
       }
       bitmap.data[out+3]=255;
@@ -126,14 +137,30 @@ function photographicSkin(front,back,item) {
   return texture;
 }
 
-export async function makeBottle(item) {
+// El vidrio transmite luz en los flancos y el cuerpo posterior. La fotografía
+// frontal, la etiqueta y el cierre conservan su opacidad de archivo.
+function glassTransmission() {
+  const w=96,h=64,pixels=new Uint8Array(w*h*4);
+  for(let j=0;j<h;j++)for(let i=0;i<w;i++){
+    const facing=Math.cos(2*Math.PI*((i+.5)/w-.5)),y=(j+.5)/h;
+    const factor=clamp((.28-facing)*2,0,1)*clamp((.89-y)/.10,0,1)*clamp(y/.06,0,1);
+    const value=Math.round(255*factor);
+    pixels.set([value,value,value,255],(j*w+i)*4);
+  }
+  const map=new T.DataTexture(pixels,w,h);
+  map.magFilter=map.minFilter=T.LinearFilter;map.wrapS=T.RepeatWrapping;map.needsUpdate=true;
+  return map;
+}
+export async function makeBottle(item,{studio=false}={}) {
   const [front,back]=await Promise.all([readPhoto(item.src),item.backSrc?readPhoto(item.backSrc):null]);
   const geometry=bottleGeometry(item.profile,item.depth||.8,item.shape||2);
   const texture=photographicSkin(front,back,{...item,shape:item.shape||2});
   const isMetal=item.material==='metal',isGlass=item.material==='glass';
+  const transmission=studio && isGlass && !back ? glassTransmission() : null;
   const mat=new T.MeshPhysicalMaterial({map:texture,roughness:isMetal?.31:isGlass?.26:.35,
     metalness:isMetal?.66:.025,clearcoat:isGlass?.55:.32,clearcoatRoughness:.16,
+    transmission:transmission ? .40 : 0,transmissionMap:transmission,
     envMap:studioReflections(),envMapIntensity:isMetal?.98:.55,ior:isGlass?1.51:1.46});
   const mesh=new T.Mesh(geometry,mat);mesh.castShadow=true;mesh.name='Botella · '+(item.name||'Colección Retana');
-  return {mesh,dispose(){mesh.removeFromParent();geometry.dispose();texture.dispose();mat.dispose();}};
+  return {mesh,dispose(){mesh.removeFromParent();geometry.dispose();texture.dispose();transmission?.dispose();mat.dispose();}};
 }

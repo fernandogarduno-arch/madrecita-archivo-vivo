@@ -12,6 +12,7 @@ import {resolvePublicPhoto,showRecordImage,houseCaption} from './archivo/foto-pu
 let pieces = [];
 let catalogLoaded = false;
 const compact3D = matchMedia('(pointer: coarse)').matches || innerWidth < 760;
+const exhibitRoute = new URLSearchParams(location.search).has('exhibir');
 
 function stationPieces(publication) {
 const activeRecords = new Map((publication?.catalog.records || []).map(row => [row.id,row]));
@@ -203,8 +204,8 @@ $('screen-toggle').onclick=toggleFilm;film.onended=()=>{$('screen-toggle').textC
 function hint(i){if(i<0){$('piece-hint').hidden=true;return;}$('piece-hint').hidden=false;$('hint-number').textContent=`0${i+1} / ${String(pieces.length).padStart(2,'0')} · ${seen.has(pieces[i].id)?'DESCUBIERTA':'POR DESCUBRIR'}`;$('hint-title').textContent=pieces[i].name;$('inspect').onclick=()=>openPiece(i);$('next').onclick=()=>goTo((i+1)%pieces.length);}
 $('gaming').onclick=()=>{if(!ready)return;enter();if(document.pointerLockElement)document.exitPointerLock();else renderer.domElement.requestPointerLock?.();};document.addEventListener('pointerlockchange',()=>{locked=document.pointerLockElement===renderer?.domElement;$('gaming').textContent=locked?'Liberar ratón · Esc':'Modo gaming';$('gaming').setAttribute('aria-pressed',String(locked));$('crosshair').hidden=!locked;keys.clear();});document.addEventListener('pointerlockerror',()=>toast('Puedes seguir mirando al arrastrar el ratón.'));
 function cancelTour(){tween=null;if(guided){guided=false;$('tour').textContent='Recorrido guiado';$('tour-caption').textContent='Explora a tu ritmo.';}}
-document.addEventListener('keydown',e=>{if(!entered||isModal()||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','shift','e'].includes(k)){e.preventDefault();if(k==='e'){openPiece(guided?selected:nearest);return;}keys.add(k);cancelTour();}});document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();drag=null;});document.addEventListener('visibilitychange',()=>{clock?.getDelta();if(document.hidden){keys.clear();drag=null;}});
-const world=$('world');world.addEventListener('pointerdown',e=>{if(!entered||isModal())return;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:0};if(!locked)world.setPointerCapture(e.pointerId);});world.addEventListener('pointermove',e=>{if(!entered||isModal())return;if(locked){cancelTour();yaw-=e.movementX*.0022;pitch=Math.max(-.65,Math.min(.7,pitch-e.movementY*.0022));}else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);if(drag.moved>4){cancelTour();yaw-=dx*.004;pitch=Math.max(-.65,Math.min(.7,pitch-dy*.004));}drag.x=e.clientX;drag.y=e.clientY;}});world.addEventListener('pointerup',e=>{if(drag&&drag.moved<6&&ready){const ray=new THREE.Raycaster();ray.setFromCamera(locked?new THREE.Vector2(0,0):new THREE.Vector2((e.clientX/innerWidth)*2-1,1-(e.clientY/innerHeight)*2),camera);const hits=ray.intersectObjects(bottles);if(hits[0]){if(hits[0].object.userData.action==='modelo')location.assign('especiales/?modelo='+encodeURIComponent(hits[0].object.userData.recordId));else if(hits[0].object.userData.action==='gabinete')location.assign('archivo/?pieza='+encodeURIComponent(hits[0].object.userData.recordId));else if(hits[0].object.userData.action==='dedication')readDedication();else if(hits[0].object.userData.action==='reserva')showDialog('reserva-dialog');else if(hits[0].object.userData.action==='screen')toggleFilm();else openPiece(hits[0].object.userData.piece);}}drag=null;});world.addEventListener('pointercancel',()=>drag=null);
+document.addEventListener('keydown',e=>{if(exhibitRoute||!entered||isModal()||/INPUT|TEXTAREA/.test(e.target.tagName))return;const k=e.key.toLowerCase();if(['w','a','s','d','arrowup','arrowdown','arrowleft','arrowright','shift','e'].includes(k)){e.preventDefault();if(k==='e'){openPiece(guided?selected:nearest);return;}keys.add(k);cancelTour();}});document.addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));window.addEventListener('blur',()=>{keys.clear();drag=null;});document.addEventListener('visibilitychange',()=>{clock?.getDelta();if(document.hidden){keys.clear();drag=null;}});
+const world=$('world');world.addEventListener('pointerdown',e=>{if(exhibitRoute||!entered||isModal())return;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,moved:0};if(!locked)world.setPointerCapture(e.pointerId);});world.addEventListener('pointermove',e=>{if(!entered||isModal())return;if(locked){cancelTour();yaw-=e.movementX*.0022;pitch=Math.max(-.65,Math.min(.7,pitch-e.movementY*.0022));}else if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);if(drag.moved>4){cancelTour();yaw-=dx*.004;pitch=Math.max(-.65,Math.min(.7,pitch-dy*.004));}drag.x=e.clientX;drag.y=e.clientY;}});world.addEventListener('pointerup',e=>{if(drag&&drag.moved<6&&ready){const ray=new THREE.Raycaster();ray.setFromCamera(locked?new THREE.Vector2(0,0):new THREE.Vector2((e.clientX/innerWidth)*2-1,1-(e.clientY/innerHeight)*2),camera);const hits=ray.intersectObjects(bottles);if(hits[0]){if(hits[0].object.userData.action==='modelo')location.assign('especiales/?modelo='+encodeURIComponent(hits[0].object.userData.recordId));else if(hits[0].object.userData.action==='gabinete')location.assign('archivo/?pieza='+encodeURIComponent(hits[0].object.userData.recordId));else if(hits[0].object.userData.action==='dedication')readDedication();else if(hits[0].object.userData.action==='reserva')showDialog('reserva-dialog');else if(hits[0].object.userData.action==='screen')toggleFilm();else openPiece(hits[0].object.userData.piece);}}drag=null;});world.addEventListener('pointercancel',()=>drag=null);
 document.querySelectorAll('[data-move]').forEach(b=>{const k={forward:'w',back:'s',left:'a',right:'d'}[b.dataset.move];b.onpointerdown=e=>{e.preventDefault();keys.add(k);cancelTour();b.setPointerCapture(e.pointerId);};b.onpointerup=b.onpointercancel=()=>keys.delete(k);b.onlostpointercapture=()=>keys.delete(k);});
 function allowed(x,z){if(x< -8.9||x>8.9||z< -16.6||z>16.9)return false;return !casona?.obstacles.some(([l,r,a,b])=>x>l-.25&&x<r+.25&&z>a-.25&&z<b+.25);}
 
@@ -250,9 +251,20 @@ function advanceCamera(dt, elapsed) {
 function animate(){if(!ready)return;requestAnimationFrame(animate);if(document.hidden)return;if(!entered){clock.getDelta();return;}const elapsed=clock.getDelta(), dt=Math.min(elapsed,.04);if(entered&&!isModal()){if(tween) advanceCamera(dt,elapsed);else move(dt);if(!guided){let best=-1,dist=4.5;pieces.forEach((p,i)=>{const d=Math.hypot(camera.position.x-p.x,camera.position.z-p.z);if(d<dist){best=i;dist=d;}});if(best!==nearest){nearest=best;hint(best);}}}camera.rotation.set(pitch,yaw,0,'YXZ');try {renderer.render(scene,camera);} catch(error) {console.warn('Render 3D',error);showLightEntrance();return;}
  if(!ready)return;
  if(document.documentElement.dataset.entry==='loading')delete document.documentElement.dataset.entry;
- if(frames++%2===0){updateMarkers();if(entered)mapDraw();}}
-window.addEventListener('resize',()=>{if(!ready)return;camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+ if(frames++%2===0&&!exhibitRoute){updateMarkers();if(entered)mapDraw();}}
+function resizeWorld() {
+  if (!ready) return;
+  const width=world.clientWidth,height=world.clientHeight;
+  if (!width || !height) return;
+  camera.aspect=width/height;
+  camera.updateProjectionMatrix();
+  renderer.setSize(width,height);
+  if (exhibitView) frameExhibit(exhibitView);
+}
+let exhibitView=null;
+new ResizeObserver(resizeWorld).observe(world);
 function showLightEntrance() {
+  const atEntrance=!entered&&!$('welcome').hidden;
   ready=false;
   entered=false;
   keys.clear();
@@ -260,7 +272,8 @@ function showLightEntrance() {
   $('hud').hidden=$('markers').hidden=$('welcome').hidden=true;
   film.pause();
   document.exitPointerLock?.();
-  window.showMuseumRecovery();
+  window.showMuseumRecovery(atEntrance);
+  window.dispatchEvent(new Event('madrecita:vista-fotografica'));
 }
 try { build(); } catch(error) { console.warn('Sala 3D',error);showLightEntrance(); }
 const stationsReady = loadStations();
@@ -273,7 +286,18 @@ function showHero() {
   window.dispatchEvent(new Event('madrecita:portada'));
 }
 
-function locateAtlas(r,setting){enter();document.exitPointerLock?.();keys.clear();tween=null;guided=true;selected=nearest=-1;hint(-1);const [x,y,z]=setting.position,s=setting.scale;camera.position.set(x,y+2.05*s,z+(innerWidth/innerHeight<.68?4.43:3.72)*s);yaw=0;pitch=Math.atan2(y+1.83*s-camera.position.y,camera.position.z-z);$('tour-caption').textContent=setting.label+' · '+r.name;$('tour').textContent='Salir de la visita guiada';}
+function frameExhibit(setting) {
+  const [x,y,z]=setting.position,s=setting.scale;
+  const distance=Math.max(2.86,2.06/camera.aspect)*s;
+  camera.position.set(x,y+2.24*s,z+distance);
+  yaw=0;
+  pitch=Math.atan2(y+2.05*s-camera.position.y,distance);
+}
+function locateAtlas(r,setting){
+  enter();document.exitPointerLock?.();keys.clear();tween=null;guided=true;selected=nearest=-1;hint(-1);
+  exhibitView=setting;resizeWorld();
+  $('tour-caption').textContent=setting.label+' · '+r.name;
+}
 const query=new URLSearchParams(location.search),station=query.get('estacion'),zones={muros:'walls',barra:'bar',comedor:'dining',lounge:'lounge',pantalla:'screen'};if(query.has('exhibir')){if(ready)enter();import('./visita-atlas.js').then(m=>m.abrirVitrina({THREE,scene,ready,id:query.get('exhibir'),locate:locateAtlas,addObstacle:b=>casona.obstacles.push(b)}));}else if(station!==null&&/^[0-5]$/.test(station)){stationsReady.then(()=>{const index=pieces.findIndex(p=>p.station===Number(station));
 if(index<0){if(ready)enter();toast('Esta estación no está disponible.');}else if(ready)goTo(index);else openPiece(index);});}else if(ready&&zones[query.get('zona')])visitZone(zones[query.get('zona')]);else if(ready&&query.has('entrar'))enter();
 

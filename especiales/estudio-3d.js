@@ -22,12 +22,16 @@ export async function openStudio(record,item) {
   $('estudio-origen').textContent=modelCaption(item);
   $('estudio-pasaporte').href='../archivo/?pieza='+encodeURIComponent(record.id);
   $('estudio-foto').href=resolvePublicPhoto(record.photos.find(p=>p.src===item.photo))||modelImage(item.src);
+  const reverse=$('estudio-reverso');
+  reverse.hidden=!item.backSrc;
+  if(item.backSrc)reverse.href=resolvePublicPhoto(record.photos.find(p=>p.src===item.backPhoto))||modelImage(item.backSrc);
+  else reverse.removeAttribute('href');
   status.textContent='Preparando la botella…';tools.hidden=true;host.replaceChildren();
   if(!dialog.open)dialog.showModal();
   let renderer,model;
   try {
     renderer=new T.WebGLRenderer({alpha:true,antialias:true,powerPreference:'low-power'});
-    model=await makeBottle(item);
+    model=await makeBottle(item,{studio:true});
   } catch {
     renderer?.dispose();renderer?.forceContextLoss();model?.dispose();
     if(token!==revision)return;
@@ -42,6 +46,11 @@ export async function openStudio(record,item) {
   canvas.tabIndex=0;canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Modelo de '+record.name+'. Arrastra o usa las flechas para girar.');
   host.replaceChildren(canvas);
   const scene=new T.Scene(),camera=new T.PerspectiveCamera(29,1,.02,15);
+  const backdrop=document.createElement('canvas');backdrop.width=backdrop.height=256;
+  const paper=backdrop.getContext('2d'),gradient=paper.createRadialGradient(124,157,0,124,157,185);
+  gradient.addColorStop(0,'#546157');gradient.addColorStop(.55,'#303d35');gradient.addColorStop(1,'#141d18');
+  paper.fillStyle=gradient;paper.fillRect(0,0,256,256);
+  scene.background=new T.CanvasTexture(backdrop);scene.background.colorSpace=T.SRGBColorSpace;
   scene.add(model.mesh,new T.HemisphereLight(0xfff8e9,0xb7c0b9,1.15));
   const key=new T.DirectionalLight(0xffedd1,2.0);key.position.set(-2.4,3.4,4.5);scene.add(key);
   const rim=new T.DirectionalLight(0xd4e6f9,1.6);rim.position.set(2.5,2,-2);scene.add(rim);
@@ -74,8 +83,13 @@ export async function openStudio(record,item) {
   canvas.onpointermove=e=>{if(drag?.[0]!==e.pointerId)return;yaw+=(e.clientX-drag[1])*.011;elevation=Math.max(-.06,Math.min(.5,elevation+(e.clientY-drag[2])*.005));drag=[e.pointerId,e.clientX,e.clientY];draw();};
   canvas.onpointerup=canvas.onpointercancel=()=>{drag=null;};
   canvas.onwheel=e=>{e.preventDefault();scale(e.deltaY>0?-.08:.08);};
-  canvas.addEventListener('webglcontextlost',()=>{if(token===revision)status.textContent='Se interrumpió la vista 3D. Puedes abrir la fotografía original.';});
-  unload=()=>{spin(false);observer.disconnect();for(const button of tools.querySelectorAll('button'))button.onclick=null;plinth.geometry.dispose();plinth.material.dispose();shadow.geometry.dispose();shadow.material.map.dispose();shadow.material.dispose();release();host.replaceChildren();};
+  canvas.addEventListener('webglcontextlost',()=>{
+    if(token!==revision)return;
+    ++revision;unload?.();unload=null;
+    const img=new Image();img.src=modelImage(item.src);img.alt=record.name;host.replaceChildren(img);
+    tools.hidden=true;status.textContent='Vista fotográfica. Se interrumpió el dibujo en 3D.';
+  });
+  unload=()=>{spin(false);observer.disconnect();for(const button of tools.querySelectorAll('button'))button.onclick=null;scene.background.dispose();plinth.geometry.dispose();plinth.material.dispose();shadow.geometry.dispose();shadow.material.map.dispose();shadow.material.dispose();release();host.replaceChildren();};
   tools.hidden=false;status.textContent='';resize();
   if(!reduce()) {yaw=-.13;draw();}spin(false);
 }
